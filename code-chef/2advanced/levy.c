@@ -3,44 +3,73 @@
 
 #include <stdio.h>
 
-int prime(int n)
+void one(int *ptr)
 {
-	for(int i=2;i<n;i++)
-		if(n%i==0)
-			return 0;
-	return 1;
+	for(int i=0;i<10000;i++)
+		*(ptr+i) = 1;
 }
+
+int sieve(int *base, int *prime)
+{
+	int size=0;
+	for(int i=2;i<10000;i++)
+	{
+		if(*(base+i))
+		{
+			*(prime+size)=i;
+			size++;
+			for(int p=i*i;p<10000;p+=i)
+				*(base+p)=0;
+		}
+	}
+	return size;
+}
+
+int search(int n, int *prime, int size)
+{
+	for(int i=0;i<size;i++)
+		if(*(prime+i)==n)
+			return 1;
+	return 0;
+}
+
 
 int main()
 {
-	int n,t,c=0,i,j;
-
+	int n, base[10000], prime[10000],size,t,c=0,rem;
+	
+	one(base);
+	one(prime);
+	
+	base[0]=base[1]=0;
+	prime[0]=prime[1]=0;
+	size=sieve(base,prime);
+	
 	scanf("%d",&t);
 
 	while(t--)
 	{
 		c=0;
 		scanf("%d",&n);
-		if(n>=5 && n%2==1)
+	
+		if(n<5)
 		{
-			for(i=2;i<n;i++)
+			printf("0\n");
+			continue;
+		}
+
+		for(int i=0;i<size;i++)
+		{
+			rem = n-prime[i];
+			if(rem%2==0 && rem>=0)
 			{
-				for(j=2;j<n-1;j++)
+				if(base[rem/2])
 				{
-					if(i+2*j==n && i!=j)
-					{
-						if(prime(i) && prime(j))
-							c++;
-					}
-					else if(i+2*j>n)
-						continue;
+					c++;
 				}
 			}
-			printf("%d\n",c);
 		}
-		else
-			printf("0\n");
+		printf("%d\n",c);
 	}
-
 	return 0;
 }
