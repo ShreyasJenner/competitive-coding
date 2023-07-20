@@ -1,2 +1,2 @@
 # competitive-coding
-Stores codes I made for competitive coding platforms 
+Stores codes for problems solved in competitive coding platforms 
