@@ -9,71 +9,56 @@ using namespace std;
 
 class Solution {
 public:
-    void asc_valid(vector<int>& v,vector<int>::iterator i,vector<int>& stac,set<vector<int>>& s) {
-        if(stac.size()==3) {
-            cout << "asc\n";
-            for(auto el: stac) {
-                cout << el << " ";
-            }
-            cout << '\n';
-            s.insert(stac);
-            stac.clear();
-        }
-
-        if(v.end() == i)
-            return ;
-
-        if(*i < *(i+1)) {
-            stac.push_back(*i);
-            asc_valid(v,i+1,stac,s);
-        }
-        stac.clear();
-        asc_valid(v,i+1,stac,s);
-    }
-
-    void desc_valid(vector<int>& v,vector<int>::iterator i,vector<int>& stac,set<vector<int>>& s) {
-        if(stac.size()==3) {
-            cout << "desc\n";
-            for(auto el : stac) {
-                cout << el << " ";
-            }
-            cout << '\n';
-            s.insert(stac);
-            stac.clear();
-        }
-
-        if(v.end() == i)
-            return ;
-
-        if(*i > *(i+1)) {
-            stac.push_back(*i);
-            desc_valid(v,i+1,stac,s);
-        }
-        stac.clear();
-        desc_valid(v,i+1,stac,s);
-    }
-
     int numTeams(vector<int>& rating) {
         int count=0;
         set<vector<int>> s;
-        vector<int> a;
+        vector<int> a=rating, b=rating;
 
-        for(int i=0;i<rating.size();i++) {
-            asc_valid(rating,rating.begin()+i,a,s);
-            a.clear();
-            desc_valid(rating,rating.begin()+i,a,s);
-            a.clear();
+        sort(a.begin(), a.end());
+
+        for(auto i=a.begin();i!=a.end();i++) {
+                    auto it = find(b.begin(), b.end(), *i);
+            for(auto j=i+1;j!=a.end();j++) {
+                    auto jt = find(b.begin(), b.end(), *j); 
+                    if(jt - it < 0 ) {
+                        break;
+                    }
+                for(auto k=j+1;k!=a.end();k++) {
+                    auto kt = find(b.begin(), b.end(), *k); 
+                    if(kt - jt > 0) {
+                        count++;
+                    }
+                }
+                    
+            }
         }
 
-        
-        return s.size();
+        for(auto i=a.begin();i!=a.end();i++) {
+                    auto it = find(b.begin(), b.end(), *i);
+            for(auto j=i+1;j!=a.end();j++) {
+                    auto jt = find(b.begin(), b.end(), *j); 
+                    if(jt - it > 0 ) {
+                        break;
+                    }
+
+                for(auto k=j+1;k!=a.end();k++) {
+                    auto kt = find(b.begin(), b.end(), *k); 
+                    
+                    if(kt - jt < 0) {
+                        count++;
+                    }
+                }
+                    
+            }
+        }
+        return count;
     }
 };
 
 int main() {
     Solution s;
 
-    vector<int> a = {1,2,3,4};
+    vector<int> a = {2,5,3,4,1};
     cout << s.numTeams(a) << '\n';
 
     for(auto el : a) {
