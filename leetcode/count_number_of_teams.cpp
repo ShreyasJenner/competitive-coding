@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <set>
 
 using namespace std;
 
@@ -11,46 +10,20 @@ class Solution {
 public:
     int numTeams(vector<int>& rating) {
         int count=0;
-        set<vector<int>> s;
-        vector<int> a=rating, b=rating;
 
-        sort(a.begin(), a.end());
+        vector<int>::iterator i,j;
 
-        for(auto i=a.begin();i!=a.end();i++) {
-                    auto it = find(b.begin(), b.end(), *i);
-            for(auto j=i+1;j!=a.end();j++) {
-                    auto jt = find(b.begin(), b.end(), *j); 
-                    if(jt - it < 0 ) {
-                        break;
-                    }
-                for(auto k=j+1;k!=a.end();k++) {
-                    auto kt = find(b.begin(), b.end(), *k); 
-                    if(kt - jt > 0) {
-                        count++;
-                    }
-                }
-                    
+        for(i=rating.begin()+1;i<rating.end()-1;i++) {
+            int less[2] = {}, great[2] = {};
+            for(j=rating.begin();j!=rating.end();j++) {
+                if(*j > *i)
+                    great[j>i]++;
+                else if(*j < *i)
+                    less[j>i]++;
             }
+            count += (less[0]*great[1]) + (great[0]*less[1]);
         }
-
-        for(auto i=a.begin();i!=a.end();i++) {
-                    auto it = find(b.begin(), b.end(), *i);
-            for(auto j=i+1;j!=a.end();j++) {
-                    auto jt = find(b.begin(), b.end(), *j); 
-                    if(jt - it > 0 ) {
-                        break;
-                    }
-
-                for(auto k=j+1;k!=a.end();k++) {
-                    auto kt = find(b.begin(), b.end(), *k); 
-                    
-                    if(kt - jt < 0) {
-                        count++;
-                    }
-                }
-                    
-            }
-        }
+ 
         return count;
     }
 };
