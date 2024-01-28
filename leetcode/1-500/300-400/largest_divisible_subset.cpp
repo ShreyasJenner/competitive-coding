@@ -8,42 +8,33 @@ using namespace std;
 
 class Solution {
 public:
-    void zero(int &ans[]) {
-
-    }
     vector<int> largestDivisibleSubset(vector<int>& nums) {
         sort(nums.begin(), nums.end());
 
-        int count,max;
-        vector<int> store,ans;
-        int cover[nums.size()]={0};
+        int i,j;
+        int max_index = 0;
+        vector<int> divcount(nums.size(), 1);
+        vector<int> prev(nums.size(), -1);
+        vector<int> ans;
 
-        for(i=0; i<nums.size(); i++) {
-            if(cover[i] == 0) {
-                memset(cover, 0, nums.size());
-                int k = nums[i];
-                store.push_back(k);
-                index = i+1;
-                while(index < nums.size()) {
-                    if(cover[index] == 0) {
-                        for(j=i+1;j<nums.size();j++) {
-                            if(nums[j] % k == 0) {
-                                cover[j] = 1;
-                                k = nums[j];
-                                count++;
-                                store.push_back(k);
-                            }
-                        }
+        for(i=1;i<nums.size();i++) {
+            for(j=0;j<i;j++) {
+                if(nums[i] % nums[j] == 0) {
+                    if(divcount[i] < divcount[j] + 1) {
+                        divcount[i] = divcount[j] + 1;
+                        prev[i] = j;
                     }
-                    index++;
-                    if(count > max) {
-                        max = count;
-                        ans = store;
-                    }
-                    store.clear();
                 }
             }
+            if(divcount[max_index] < divcount[i])
+                max_index = i;
         }
+
+        while(max_index>=0) {
+            ans.push_back(nums[max_index]);
+            max_index = prev[max_index];
+        }
+        
         return ans;
 
     }
