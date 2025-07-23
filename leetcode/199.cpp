@@ -45,18 +45,15 @@ public:
 
   vector<int> rightSideView(TreeNode *root) {
     int ht = height(root);
-    int lvl;
+    int lvl, idx;
 
-    vector<int> vec, ans;
+    vector<int> ans;
     stack<tuple<TreeNode *, int>> stck;
     TreeNode *ptr;
 
-    for (lvl = 0; lvl <= ht; lvl++) {
-      vec.push_back(-101);
-    }
-
+    idx = 0;
     stck.push(make_tuple(root, 0));
-    while (!stck.empty()) {
+    while (idx <= ht) {
       ptr = get<0>(stck.top());
       lvl = get<1>(stck.top());
       stck.pop();
@@ -65,15 +62,10 @@ public:
         stck.push(make_tuple(ptr->left, lvl + 1));
         stck.push(make_tuple(ptr->right, lvl + 1));
 
-        if (vec[lvl] == -101) {
-          vec[lvl] = ptr->val;
+        if (lvl >= idx) {
+          ans.push_back(ptr->val);
+          idx++;
         }
-      }
-    }
-
-    for (int val : vec) {
-      if (val != -101) {
-        ans.push_back(val);
       }
     }
 
@@ -87,9 +79,9 @@ int main() {
   TreeNode t1, t2, t3, t4, t5;
 
   t5 = TreeNode(5);
-  t4 = TreeNode(4, &t5, nullptr);
+  t4 = TreeNode(4);
   t3 = TreeNode(3);
-  t2 = TreeNode(2, &t4, nullptr);
+  t2 = TreeNode(2, &t4, &t5);
   t1 = TreeNode(1, &t2, &t3);
 
   vector<int> ans = s.rightSideView(&t1);
