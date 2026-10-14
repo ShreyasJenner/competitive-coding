@@ -157,6 +157,31 @@ nav.course a { margin-right: 1rem; }
 }
 .score { font-size: .85rem; color: var(--muted); }
 
+/* ---- stepper.js ---- */
+.stepper { margin: 1.4rem 0; padding: 1rem; border: 1px solid var(--rule); border-radius: 4px; outline: none; }
+.stepper:focus-visible { border-color: var(--accent); }
+.st-grid { display: grid; grid-template-columns: 1fr; gap: .8rem; }
+@media (min-width: 720px) { .st-grid { grid-template-columns: 3fr 2fr; } }
+.st-code { margin: 0; font-size: .74rem; }
+.st-line { display: block; border-radius: 2px; }
+.st-line.st-active { background: var(--accent); color: var(--bg); }
+.st-ln { opacity: .5; }
+.st-panel { font-family: var(--mono); font-size: .74rem; margin-bottom: .6rem; }
+.st-h { font-family: var(--serif); font-style: italic; font-size: .78rem; color: var(--muted); margin-bottom: .15rem; }
+.st-frame { padding: .1rem .4rem; border-left: 2px solid var(--rule); }
+.st-frame.st-top { border-left-color: var(--accent); font-weight: 600; }
+.st-var { padding: .1rem 0; }
+.st-note { font-size: .88rem; min-height: 2.6em; margin: .6rem 0 .4rem; }
+.st-controls { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.st-controls button {
+  font: inherit; font-size: .85rem; padding: .3rem .8rem; cursor: pointer;
+  color: var(--bg); background: var(--fg); border: 0; border-radius: 3px;
+}
+.st-controls button:disabled { opacity: .35; cursor: default; }
+.st-count { font-size: .8rem; color: var(--muted); }
+.st-input { font: inherit; font-family: var(--mono); font-size: .85rem; width: 6rem; color: var(--fg);
+  background: var(--bg); border: 1px solid var(--rule); border-radius: 3px; padding: .15rem .3rem; }
+
 @media print {
   :root { --bg: #fff; --fg: #000; --code-bg: #f4f4f4; }
   body { max-width: none; padding: 0; font-size: 11pt; }

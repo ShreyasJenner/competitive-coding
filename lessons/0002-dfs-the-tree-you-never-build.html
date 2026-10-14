@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Implicit Tree</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/quiz.js"></script>
+<script src="../assets/stepper.js"></script>
+</head>
+<body>
+
+<nav class="course no-print">
+  Lesson 2 &middot;
+  <a href="0001-keep-or-delete-backtracking.html">&larr; Lesson 1: Keep or Delete</a>
+  <a href="../reference/backtracking.html">Reference: backtracking</a>
+</nav>
+
+<h1>The Tree You Never Build</h1>
+<p class="subtitle">Depth-first search as recursion over choices, the missing step in LC 301</p>
+
+<div class="win">
+  <strong>Your win today:</strong> a ten-line DFS that lists every <em>subsequence</em> of a string. Once it works,
+  step 2 of 301 is that same function with three <code>if</code>s added.
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>1. You&rsquo;ve already written one</h2>
+
+<p>Here&rsquo;s your <code>count_descendants</code> from LC 230:</p>
+
+<pre><code>int count_descendants(TreeNode *ptr) {
+  if (ptr == NULL) return 0;                    // base case
+  int leftcount  = count_descendants(ptr-&gt;left);  // go all the way down the left first
+  int rightcount = count_descendants(ptr-&gt;right); // only then try the right
+  return leftcount + rightcount + ...;
+}</code></pre>
+
+<p>That is a <strong>depth-first search</strong> (DFS). Each call dives all the way down one branch before it
+comes back to try the next. In 230 the tree already exists in memory, built from <code>TreeNode</code> pointers. In 301 there is
+<strong>no tree in memory</strong>. The tree from Lesson 1 exists only as the pattern of function calls:</p>
+
+<table>
+  <tr><th></th><th>LC 230 (tree in memory)</th><th>Subsequences / LC 301 (implicit tree)</th></tr>
+  <tr><td>A node is&hellip;</td><td>a <code>TreeNode*</code></td><td>one call, <code>dfs(i)</code>, plus the current <code>path</code></td></tr>
+  <tr><td>Its children are&hellip;</td><td><code>ptr-&gt;left</code>, <code>ptr-&gt;right</code></td><td>the recursive calls it makes, one per <em>choice</em> about <code>s[i]</code></td></tr>
+  <tr><td>Base case</td><td><code>ptr == NULL</code></td><td><code>i == s.size()</code>: no characters left to decide</td></tr>
+  <tr><td>Result</td><td>returned and summed</td><td>at a leaf, <code>path</code> is pushed into an output list</td></tr>
+</table>
+
+<span class="sidenote">Laaksonen&rsquo;s <a href="https://cses.fi/book/book.pdf">Handbook &sect;5.1</a> builds subsets with exactly this
+<code>search(k)</code> recursion: for each element, one call without it and one call with it.</span>
+
+<!-- ───────────────────────────────────────── -->
+<h2>2. Watch it run</h2>
+
+<p>This DFS lists every <strong>subsequence</strong> of <code>s</code>, meaning every string you can get by deleting
+any characters. It&rsquo;s Lesson 1&rsquo;s keep/delete tree <em>without any pruning</em>. Step through it and keep an eye on
+the call stack and on <code>path</code>, especially at line 9.</p>
+
+<p class="no-print"><label>Input <code>s</code> = <input class="st-input" id="st-in" value="ab" maxlength="4"></label>
+<span class="score">(up to 4 characters; click the box below, then use &larr; &rarr; keys)</span></p>
+<div class="stepper" id="st"></div>
+
+<div class="callout"><strong>Line 9 is the &ldquo;back&rdquo; in backtracking.</strong> Every call must hand
+<code>path</code> back to its caller exactly as it received it. The keep branch appends a character, so it must remove it
+again before returning. Otherwise the caller&rsquo;s next choice starts from a corrupted path.</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>3. Predict</h2>
+
+<div class="drill">
+  <p class="q"><strong>Without the stepper</strong>, write the order in which leaves are recorded for <code>s = "abc"</code>.
+  Type letters only, and <code>_</code> for the empty string.</p>
+  <div class="row">
+    <label>1 <input data-expect="_"></label> <label>2 <input data-expect="c"></label>
+    <label>3 <input data-expect="b"></label> <label>4 <input data-expect="bc"></label>
+  </div>
+  <div class="row">
+    <label>5 <input data-expect="a"></label> <label>6 <input data-expect="ac"></label>
+    <label>7 <input data-expect="ab"></label> <label>8 <input data-expect="abc"></label>
+  </div>
+  <button class="check">Check</button>
+  <p class="explain">Delete comes first, so the leftmost path deletes everything: <code>""</code>. Then the deepest
+  undecided character (<code>c</code>) flips to &ldquo;keep&rdquo;. Only after <em>every</em> combination of
+  <code>b</code>,<code>c</code> is done does <code>a</code> flip. It works like counting in binary, with <code>a</code> as the slowest digit.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>4. Check yourself</h2>
+
+<div class="quiz" data-answer="2">
+  <p class="q">1. In 230 a node&rsquo;s children were <code>ptr-&gt;left</code>/<code>ptr-&gt;right</code>. Here, what are a node&rsquo;s children?</p>
+  <button class="opt">Pointers stored inside a node struct</button>
+  <button class="opt">The next two characters of s</button>
+  <button class="opt">Two recursive calls, each with i+1</button>
+  <button class="opt">Every string with one character removed</button>
+  <p class="explain">Nothing is stored. A child exists only while its call is on the stack. (The last option describes a
+  <em>different</em> tree for 301, the one a BFS would search.)</p>
+</div>
+
+<div class="quiz" data-answer="3">
+  <p class="q">2. Why does line 9 call <code>path.pop_back()</code>?</p>
+  <button class="opt">So the output skips duplicate strings</button>
+  <button class="opt">So recursion stops at the leaf</button>
+  <button class="opt">So s shrinks by one character</button>
+  <button class="opt">So the caller sees path unchanged</button>
+  <p class="explain">Choose, explore, un-choose. <code>path</code> is shared by every call, so each call must undo its own edit.</p>
+</div>
+
+<div class="quiz" data-answer="1">
+  <p class="q">3. For a string of length <var>n</var>, how many leaves does this DFS reach?</p>
+  <button class="opt">n leaves</button>
+  <button class="opt">2^n leaves</button>
+  <button class="opt">2n leaves</button>
+  <button class="opt">n! leaves</button>
+  <p class="explain">There are two choices per character and <var>n</var> characters, so 2&middot;2&middot;&hellip;&middot;2 = 2<sup>n</sup>. That&rsquo;s why
+  301&rsquo;s pruning matters.</p>
+</div>
+
+<div class="quiz" data-answer="0">
+  <p class="q">4. In 301 the budget changes per branch. Where should <code>rmL</code>/<code>rmR</code> live during the search?</p>
+  <button class="opt">As dfs parameters, copied per branch</button>
+  <button class="opt">As class members, never changed again</button>
+  <button class="opt">As globals, reset at every leaf</button>
+  <button class="opt">As locals declared inside dfs itself</button>
+  <p class="explain">Parameters are copied into each call, so a child spending budget can&rsquo;t affect its sibling, with no undo
+  needed. (Members also work if you decrement before the call and increment after, just like <code>path</code>. But
+  parameters are harder to get wrong.)</p>
+</div>
+<p class="score"></p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>5. Warm-up: write it yourself</h2>
+
+<p>Close the stepper and write it from memory in <code>usr/src/warmup/subsequences.cpp</code>. Five test cases are
+waiting in <code>usr/test/warmup/subsequences.cpp</code>, including <code>"aa"</code>, which should produce
+<code>"a"</code> <em>twice</em>.</p>
+
+<button class="copy no-print" data-target="starter">Copy starter</button>
+<pre id="starter"><code>#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+
+class Solution {
+  std::string s, path;
+  std::vector&lt;std::string&gt; out;
+
+  void dfs(int i) {
+    // base case, then the two children
+  }
+
+public:
+  std::vector&lt;std::string&gt; subsequences(std::string str) {
+    s = str;
+    path.clear();
+    out.clear();
+    dfs(0);
+    return out;
+  }
+};
+
+#ifndef TEST
+int main() {
+  Solution sol;
+  for (const std::string &amp;r : sol.subsequences("abc")) std::cout &lt;&lt; '"' &lt;&lt; r &lt;&lt; "\"\n";
+}
+#endif</code></pre>
+
+<pre><code>./test.sh subsequences</code></pre>
+
+<!-- ───────────────────────────────────────── -->
+<h2>6. Back to 301</h2>
+
+<p>Your 301 <code>dfs</code> is the warm-up plus the rules from Lesson 1. Here is what changes:</p>
+
+<ol>
+  <li><strong>Signature:</strong> <code>void dfs(int i, int open, int rmL, int rmR)</code>. The budget travels as parameters,
+  and each child gets the updated copy (see the table below).</li>
+  <li><strong>Leaf:</strong> record <code>path</code> only if <code>open == 0 &amp;&amp; rmL == 0 &amp;&amp; rmR == 0</code>, and
+  record it into a <code>std::set</code>.</li>
+  <li><strong>Children:</strong> the delete child exists only for a bracket with budget left. The keep child is skipped for a
+  <code>)</code> when <code>open == 0</code>.</li>
+</ol>
+
+<table>
+  <tr><th>Child for <code>s[i]</code></th><th>open</th><th>rmL</th><th>rmR</th><th>path</th></tr>
+  <tr><td>delete <code>(</code></td><td>&ndash;</td><td>&minus;1</td><td>&ndash;</td><td>&ndash;</td></tr>
+  <tr><td>delete <code>)</code></td><td>&ndash;</td><td>&ndash;</td><td>&minus;1</td><td>&ndash;</td></tr>
+  <tr><td>keep <code>(</code></td><td>+1</td><td>&ndash;</td><td>&ndash;</td><td>push / pop</td></tr>
+  <tr><td>keep <code>)</code></td><td>&minus;1</td><td>&ndash;</td><td>&ndash;</td><td>push / pop</td></tr>
+  <tr><td>keep a letter</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>push / pop</td></tr>
+</table>
+
+<p>Your scan already produces the starting budget, so the first call is
+<code>dfs(0, 0, rmL, rmR)</code>. Then run <code>./test.sh 301</code>.</p>
+
+<hr>
+
+<h3>Primary source</h3>
+<p>Read <strong>&sect;5.1 &ldquo;Generating subsets&rdquo;, Method 1</strong> (about one page) in Laaksonen&rsquo;s
+<a href="https://cses.fi/book/book.pdf"><em>Competitive Programmer&rsquo;s Handbook</em></a>. Its <code>search(k)</code> is this
+lesson&rsquo;s <code>dfs(i)</code>, and its recursion-tree figure is the tree you just stepped through. &sect;5.3 &ldquo;Backtracking&rdquo;
+then adds pruning on top, as 301 does.</p>
+
+<p class="callout">Stuck, or something feels hand-wavy? <strong>Ask me.</strong> Paste your <code>dfs</code> or a failing
+<code>./test.sh</code> output and I&rsquo;ll point at the line without rewriting it for you.</p>
+
+<script>
+  const CODE = [
+    "void dfs(int i) {",
+    "  if (i == s.size()) {       // leaf: no choices left",
+    "    out.push_back(path);",
+    "    return;",
+    "  }",
+    "  dfs(i + 1);                // child 1: delete s[i]",
+    "  path.push_back(s[i]);      // child 2: keep s[i] (choose)",
+    "  dfs(i + 1);                //          explore",
+    "  path.pop_back();           //          un-choose",
+    "}",
+  ];
+
+  function steps(s) {
+    const r = Stepper.recorder();
+    let path = "";
+    const V = (i) => ({ i, "s[i]": i < s.length ? `'${s[i]}'` : "(none)", path: `"${path}"` });
+    function dfs(i) {
+      r.call(`dfs(i=${i})`);
+      if (i === s.length) {
+        r.snap(2, V(i), `i == ${s.length}: this is a leaf. Every character has been decided.`);
+        r.emit(`"${path}"`);
+        r.snap(3, V(i), `Record path "${path}".`);
+        r.snap(4, V(i), "Return. This frame is popped off the stack and its caller resumes.");
+        r.ret();
+        return;
+      }
+      r.snap(2, V(i), `i = ${i} < ${s.length}: there's still a choice to make about '${s[i]}'.`);
+      r.snap(6, V(i), `Child 1: delete '${s[i]}'. path stays "${path}" and we go one level deeper.`);
+      dfs(i + 1);
+      r.snap(7, V(i), `Back in dfs(i=${i}) after the whole delete subtree. Child 2: keep '${s[i]}'.`);
+      path += s[i];
+      r.snap(8, V(i), `path is now "${path}". Go one level deeper.`);
+      dfs(i + 1);
+      r.snap(9, V(i), `Back again. Un-choose: remove '${s[i]}' so our caller gets path back unchanged.`);
+      path = path.slice(0, -1);
+      r.snap(10, V(i), `dfs(i=${i}) is done and returns to its caller with path "${path}".`);
+      r.ret();
+    }
+    dfs(0);
+    return r.steps;
+  }
+
+  function show() {
+    const s = document.getElementById("st-in").value.slice(0, 4);
+    Stepper.mount(document.getElementById("st"), { code: CODE, steps: steps(s) });
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("st-in").addEventListener("input", show);
+    show();
+  });
+</script>
+</body>
+</html>

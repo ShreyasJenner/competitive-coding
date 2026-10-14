@@ -14,6 +14,7 @@
   Lesson 1 &middot;
   <a href="../reference/backtracking.html">Reference: backtracking</a>
   <a href="../MISSION.md">Mission</a>
+  <a href="0002-dfs-the-tree-you-never-build.html">New to DFS? Lesson 2 &rarr;</a>
 </nav>
 
 <h1>Keep or Delete</h1>
@@ -70,6 +71,10 @@ Keep a balance <code>open</code> as you scan:</p>
 root-to-leaf path builds one candidate string. This is the same shape as generating subsets in the
 <a href="https://cses.fi/book/book.pdf">Competitive Programmer&rsquo;s Handbook, &sect;5.1</a>: each element is either in or out.</p>
 
+<div class="callout"><strong>Two passes, two meanings.</strong> The search runs <em>after</em> the scan in Part 1 has finished.
+The scan&rsquo;s <code>rmL</code>/<code>rmR</code> count <em>up</em> from 0 and become the starting budget. Inside the search they
+mean <em>deletions still allowed</em> and only count <em>down</em>, by one each time a bracket is deleted.</div>
+
 <p>Without pruning that is 2<sup><var>n</var></sup> leaves. Each <strong>pruning rule</strong> below cuts off a branch that
 cannot lead to a valid answer:</p>
 
@@ -125,7 +130,9 @@ cannot lead to a valid answer:</p>
   <text class="bad" x="540" y="265" text-anchor="middle">&#10007; pruned: o=0</text>
   </g>
 </svg>
-<figcaption>The full search tree for <code>"())"</code> (budget rmL=0, rmR=1). Each node shows the path built so far, <code>o</code> = open, <code>r</code> = rmR.
+<figcaption>The full search tree for <code>"())"</code>. The Part 1 scan has already run: its third character is a <code>)</code> with
+open=0, so the budget is rmL=0, rmR=1. Each node shows the path built so far, <code>o</code> = open, and <code>r</code> = <code>)</code> deletions
+still allowed (it starts at 1 and counts down).
 Two different paths produce the same string <code>"()"</code>.</figcaption>
 </figure>
 
