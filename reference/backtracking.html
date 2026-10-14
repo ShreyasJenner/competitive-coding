@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backtracking Reference</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<h1>Backtracking</h1>
+<p class="subtitle">Quick reference &middot; C++ &middot; source: <a href="https://cses.fi/book/book.pdf">CPH ch. 5</a></p>
+
+<h2>Spot it</h2>
+<ul>
+  <li>&ldquo;Return <strong>all</strong> &hellip;&rdquo; or &ldquo;generate every &hellip;&rdquo;</li>
+  <li>Small input (n &le; ~25) means 2<sup>n</sup> or n! is fine</li>
+  <li>The answer is built one decision at a time (include/exclude, keep/delete, place/skip)</li>
+</ul>
+
+<h2>Template</h2>
+<pre><code>void dfs(int i, State st) {
+  if (dead(st)) return;          // prune: can't reach a good leaf
+  if (i == n) {                  // leaf
+    if (good(st)) record(path);
+    return;
+  }
+  for (Choice c : choices(i, st)) {
+    apply(c);                    // choose
+    dfs(i + 1, next(st, c));     // explore
+    undo(c);                     // un-choose
+  }
+}</code></pre>
+
+<h2>Pruning checklist</h2>
+<ol>
+  <li>Can you compute a <strong>budget</strong> up front (the minimum cost, or the count of each thing to remove)? Never overspend it.</li>
+  <li>Is there an <strong>invariant</strong> that, once broken, can never be repaired (balance &lt; 0, sum &gt; target)? Cut there.</li>
+  <li>Can different paths produce the <strong>same output</strong>? Dedupe with a <code>set</code>, or skip equal siblings.</li>
+</ol>
+
+<h2>Parentheses toolkit</h2>
+<table>
+  <tr><th>Need</th><th>How</th></tr>
+  <tr><td>Is it valid?</td><td>Scan with <code>open</code>, never let it go &lt; 0, and finish at 0</td></tr>
+  <tr><td>Min removals</td><td>Unmatched <code>)</code> &rarr; <code>rmR++</code>; leftover <code>open</code> &rarr; <code>rmL</code></td></tr>
+  <tr><td>All min-removal results</td><td>Keep/delete DFS within budget, keep <code>)</code> only if <code>open &gt; 0</code> (<a href="../lessons/0001-keep-or-delete-backtracking.html">Lesson 1</a>)</td></tr>
+</table>
+
+<h2>Cost</h2>
+<p>Binary choices give O(2<sup>n</sup>) leaves, times O(n) to copy each accepted string. Pruning helps a lot in
+practice but doesn&rsquo;t change the worst case.</p>
+
+</body>
+</html>

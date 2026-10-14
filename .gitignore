@@ -1,2 +1,25 @@
-test/
+# Build output (build.sh / test.sh)
+/usr/bin/
+/usr/obj/
+
+# Compiler artifacts anywhere
+*.o
+*.obj
+*.d
+*.gch
+*.pch
+*.out
 a.out
+*.dSYM/
+
+# Debug / crash leftovers
+core
+core.*
+vgcore.*
+
+# Editor / language-server caches
+.cache/
+compile_commands.json
+
+# Old scratch folder at the repo root (anchored so usr/test is tracked)
+/test/

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keep or Delete</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/quiz.js"></script>
+</head>
+<body>
+
+<nav class="course no-print">
+  Lesson 1 &middot;
+  <a href="../reference/backtracking.html">Reference: backtracking</a>
+  <a href="../MISSION.md">Mission</a>
+</nav>
+
+<h1>Keep or Delete</h1>
+<p class="subtitle">Backtracking with a budget, using LeetCode 301 &ldquo;Remove Invalid Parentheses&rdquo;</p>
+
+<div class="win">
+  <strong>Your win today:</strong> an accepted solution to
+  <a href="https://leetcode.com/problems/remove-invalid-parentheses/">LC 301</a> that you wrote yourself, and a
+  reusable way to think about backtracking: <em>a recursion tree where every node is a choice, and pruning cuts off branches that can&rsquo;t reach a good leaf.</em>
+</div>
+
+<p>The task: given a string of <code>(</code>, <code>)</code> and letters, remove the
+<strong>minimum</strong> number of parentheses so it becomes valid, and return <strong>every</strong> distinct
+result. For example, <code>"()())()"</code> becomes <code>["(())()", "()()()"]</code>.</p>
+
+<p>The words &ldquo;minimum&rdquo; and &ldquo;every&rdquo; give away the technique. &ldquo;Every&rdquo; means enumeration, so you need a complete search.
+&ldquo;Minimum&rdquo; tells you how to keep that search small.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>1. Know your budget before you search</h2>
+
+<p>A single left-to-right scan tells you <em>exactly</em> how many of each bracket must go.
+Keep a balance <code>open</code> as you scan:</p>
+
+<ul>
+  <li><code>(</code> &rarr; <code>open++</code></li>
+  <li><code>)</code> with <code>open &gt; 0</code> &rarr; it matches something, so <code>open--</code></li>
+  <li><code>)</code> with <code>open == 0</code> &rarr; nothing can ever match it, so <code>rmR++</code></li>
+  <li>At the end, whatever is still open is unmatched: <code>rmL = open</code></li>
+</ul>
+
+<span class="sidenote">This scan is LeetCode 921 (&ldquo;Minimum Add to Make Parentheses Valid&rdquo;) in disguise, as
+<a href="https://walkccc.me/LeetCode/problems/0301/">walkccc&rsquo;s write-up</a> points out.</span>
+
+<p><code>rmL + rmR</code> is the minimum number of removals. So the search only ever removes exactly
+<code>rmL</code> opens and <code>rmR</code> closes. Those two numbers are its <strong>budget</strong>.</p>
+
+<div class="drill">
+  <p class="q"><strong>Drill.</strong> Run the scan in your head and fill in the budget for each string.</p>
+  <div class="row"><code>"()())()"</code> <label>rmL <input data-expect="0"></label> <label>rmR <input data-expect="1"></label></div>
+  <div class="row"><code>"))("</code> <label>rmL <input data-expect="1"></label> <label>rmR <input data-expect="2"></label></div>
+  <div class="row"><code>"(a)(()"</code> <label>rmL <input data-expect="1"></label> <label>rmR <input data-expect="0"></label></div>
+  <div class="row"><code>"())(()"</code> <label>rmL <input data-expect="1"></label> <label>rmR <input data-expect="1"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">For <code>"())(()"</code>: <code>(</code> open=1 &middot; <code>)</code> open=0 &middot; <code>)</code> with open=0, so rmR=1 &middot;
+  <code>(</code> open=1 &middot; <code>(</code> open=2 &middot; <code>)</code> open=1. At the end open=1, so rmL=1.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>2. The search is a tree of choices</h2>
+
+<p>Walk the string by index <code>i</code>. Each parenthesis gives two choices, <strong>keep</strong> it or
+<strong>delete</strong> it. Letters are always kept. That makes a binary recursion tree of depth <var>n</var>, and each
+root-to-leaf path builds one candidate string. This is the same shape as generating subsets in the
+<a href="https://cses.fi/book/book.pdf">Competitive Programmer&rsquo;s Handbook, &sect;5.1</a>: each element is either in or out.</p>
+
+<p>Without pruning that is 2<sup><var>n</var></sup> leaves. Each <strong>pruning rule</strong> below cuts off a branch that
+cannot lead to a valid answer:</p>
+
+<table>
+  <tr><th>Choice</th><th>Allowed only if</th><th>Why</th></tr>
+  <tr><td>delete <code>(</code></td><td><code>rmL &gt; 0</code></td><td>Otherwise you&rsquo;d remove more than the minimum</td></tr>
+  <tr><td>delete <code>)</code></td><td><code>rmR &gt; 0</code></td><td>Same reason</td></tr>
+  <tr><td>keep <code>)</code></td><td><code>open &gt; 0</code></td><td>An unmatched <code>)</code> can never be fixed later</td></tr>
+  <tr><td>keep <code>(</code></td><td>always</td><td>A later <code>)</code> might match it</td></tr>
+  <tr><td>accept leaf</td><td><code>open == 0 &amp;&amp; rmL == 0 &amp;&amp; rmR == 0</code></td><td>Balanced, with the whole budget spent</td></tr>
+</table>
+
+<figure>
+<svg viewBox="0 0 620 300" role="img" aria-label="Recursion tree for the input ())" font-family="monospace" font-size="13">
+  <style>
+    .e { stroke: currentColor; stroke-opacity: .45; fill: none; }
+    .n { fill: var(--bg); stroke: currentColor; }
+    .lbl { fill: currentColor; }
+    .el { fill: currentColor; opacity: .7; font-size: 11px; font-family: serif; font-style: italic; }
+    .ok { fill: var(--ok); }
+    .bad { fill: var(--bad); }
+  </style>
+  <g style="color: var(--fg)">
+  <!-- edges -->
+  <line class="e" x1="310" y1="40" x2="310" y2="92"/>
+  <line class="e" x1="310" y1="118" x2="170" y2="168"/>
+  <line class="e" x1="310" y1="118" x2="450" y2="168"/>
+  <line class="e" x1="170" y1="194" x2="170" y2="246"/>
+  <line class="e" x1="450" y1="194" x2="370" y2="246"/>
+  <line class="e" x1="450" y1="194" x2="540" y2="246"/>
+  <!-- edge labels -->
+  <text class="el" x="318" y="72">keep ( &#8212; can&#8217;t delete, rmL=0</text>
+  <text class="el" x="150" y="140">delete )</text>
+  <text class="el" x="400" y="140">keep )</text>
+  <text class="el" x="178" y="226">keep )</text>
+  <text class="el" x="352" y="226">delete )</text>
+  <text class="el" x="505" y="226">keep )</text>
+  <!-- nodes: path / open / rmR -->
+  <rect class="n" x="250" y="16" width="120" height="24" rx="4"/>
+  <text class="lbl" x="310" y="33" text-anchor="middle">"" o=0 r=1</text>
+  <rect class="n" x="250" y="94" width="120" height="24" rx="4"/>
+  <text class="lbl" x="310" y="111" text-anchor="middle">"(" o=1 r=1</text>
+  <rect class="n" x="110" y="170" width="120" height="24" rx="4"/>
+  <text class="lbl" x="170" y="187" text-anchor="middle">"(" o=1 r=0</text>
+  <rect class="n" x="390" y="170" width="120" height="24" rx="4"/>
+  <text class="lbl" x="450" y="187" text-anchor="middle">"()" o=0 r=1</text>
+  <rect class="n" x="110" y="248" width="120" height="24" rx="4"/>
+  <text class="lbl" x="170" y="265" text-anchor="middle">"()" o=0 r=0</text>
+  <text class="ok" x="170" y="290" text-anchor="middle">&#10003; accept</text>
+  <rect class="n" x="310" y="248" width="120" height="24" rx="4"/>
+  <text class="lbl" x="370" y="265" text-anchor="middle">"()" o=0 r=0</text>
+  <text class="ok" x="370" y="290" text-anchor="middle">&#10003; accept (duplicate!)</text>
+  <text class="bad" x="540" y="265" text-anchor="middle">&#10007; pruned: o=0</text>
+  </g>
+</svg>
+<figcaption>The full search tree for <code>"())"</code> (budget rmL=0, rmR=1). Each node shows the path built so far, <code>o</code> = open, <code>r</code> = rmR.
+Two different paths produce the same string <code>"()"</code>.</figcaption>
+</figure>
+
+<!-- ───────────────────────────────────────── -->
+<h2>3. Different paths, same string</h2>
+
+<p>The figure shows the last trap. Deleting <em>either</em> of the two <code>)</code> gives <code>"()"</code>, but the
+problem wants distinct results. For your first version, put every accepted path into a
+<code>std::set&lt;std::string&gt;</code> and convert it to a vector at the end. Inputs are at most 25 characters
+(<a href="https://leetcode.doocs.org/en/lc/301/">constraints</a>), so a set costs almost nothing here.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>4. Check yourself</h2>
+<p>Try to answer from memory before you scroll back up. The effort of recalling is what makes it stick.</p>
+
+<div class="quiz" data-answer="0">
+  <p class="q">1. Why compute <code>rmL</code> and <code>rmR</code> before searching?</p>
+  <button class="opt">It caps every branch at minimum removals</button>
+  <button class="opt">It sorts candidate strings into lexical order</button>
+  <button class="opt">It replaces the recursion with one scan</button>
+  <button class="opt">It detects letters that must be removed</button>
+  <p class="explain">The budget does two jobs. It guarantees every accepted string uses the <em>minimum</em> number of removals, and it prunes any branch that would overspend.</p>
+</div>
+
+<div class="quiz" data-answer="2">
+  <p class="q">2. At index <code>i</code> you see <code>)</code> and <code>open == 0</code>. Which branches survive?</p>
+  <button class="opt">Keep only, provided rmR is positive</button>
+  <button class="opt">Both branches, provided rmR is positive</button>
+  <button class="opt">Delete only, provided rmR is positive</button>
+  <button class="opt">Neither branch; return from this call</button>
+  <p class="explain">Keeping it would make the balance negative, which no later character can repair. The only branch left is delete, and that needs budget.</p>
+</div>
+
+<div class="quiz" data-answer="3">
+  <p class="q">3. Two different leaves produce the same string. What should you do?</p>
+  <button class="opt">Stop the search after the first leaf</button>
+  <button class="opt">Raise rmL so a different branch wins</button>
+  <button class="opt">Sort the input string before searching it</button>
+  <button class="opt">Store the results in a set first</button>
+  <p class="explain">Duplicates are expected whenever equal adjacent characters can be deleted. A set removes them. A cleverer skip rule exists (see the stretch goal below).</p>
+</div>
+
+<div class="quiz" data-answer="1">
+  <p class="q">4. What state must each recursive call know?</p>
+  <button class="opt">Index and built path; budgets stay global</button>
+  <button class="opt">Index, open count, both budgets, path</button>
+  <button class="opt">Open count only; recompute everything else</button>
+  <button class="opt">Both budgets only; the index is implicit</button>
+  <p class="explain">Each pruning rule reads one of these: <code>i</code> picks the character, <code>open</code> guards keeping <code>)</code>, and <code>rmL</code>/<code>rmR</code> guard deletions. The path is the answer you&rsquo;re building.</p>
+</div>
+<p class="score"></p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>5. Your turn</h2>
+
+<p>Create <code>usr/src/leetcode/301.cpp</code> from this starter. Seven test cases are already waiting in
+<code>usr/test/leetcode/301.cpp</code>. That file <code>#include</code>s your solution, so wrap your own
+<code>main</code> in <code>#ifndef TEST</code>, otherwise the two <code>main</code>s will clash.</p>
+
+<button class="copy no-print" data-target="starter">Copy starter</button>
+<pre id="starter"><code>#include &lt;iostream&gt;
+#include &lt;set&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+
+class Solution {
+public:
+  std::vector&lt;std::string&gt; removeInvalidParentheses(std::string s) {
+    // 1. scan for rmL, rmR
+    // 2. dfs(i, open, rmL, rmR) building a path
+    // 3. collect accepted paths in a set
+  }
+};
+
+#ifndef TEST
+int main() {
+  Solution s;
+  for (const std::string &amp;r : s.removeInvalidParentheses("()())()"))
+    std::cout &lt;&lt; r &lt;&lt; '\n';
+}
+#endif</code></pre>
+
+<pre><code>./test.sh 301                 # compile + run the 7 cases (PASS/FAIL each)
+./build.sh 301 &amp;&amp; usr/bin/leetcode/301   # run your own main</code></pre>
+<p>Builds use AddressSanitizer and UBSan, so an out-of-bounds <code>s[i]</code> crashes loudly with a line number
+instead of silently giving a wrong answer.</p>
+
+<p>If you get stuck, open the hints one at a time. Each hint gives away a little more.</p>
+
+<details>
+  <summary>Hint 1: the recursion skeleton</summary>
+  <p>Store <code>s</code>, the current <code>path</code> and the result <code>set</code> as class members. Then
+  <code>dfs</code> only needs <code>(i, open, rmL, rmR)</code>. The base case is <code>i == s.size()</code>.</p>
+</details>
+<details>
+  <summary>Hint 2: order of the branches</summary>
+  <p>First try deleting <code>s[i]</code> if it&rsquo;s a bracket and the budget allows. Then try keeping it, but bail out
+  before keeping a <code>)</code> when <code>open == 0</code>.</p>
+</details>
+<details>
+  <summary>Hint 3: choose / explore / un-choose</summary>
+  <p>Keeping a character is <code>path.push_back(c)</code>, then recurse, then <code>path.pop_back()</code>. This is the
+  backtracking pattern: undo your choice so the sibling branch sees a clean state. See
+  <a href="../reference/backtracking.html">the reference sheet</a>.</p>
+</details>
+
+<p>Once all seven pass, submit on <a href="https://leetcode.com/problems/remove-invalid-parentheses/">LeetCode</a>.</p>
+
+<div class="callout">
+  <strong>Stretch goal (optional).</strong> Drop the <code>std::set</code>. Instead, avoid duplicates by never deleting a
+  character right after you <em>kept</em> an identical one. Can you convince yourself why that works?
+  If you&rsquo;d like to see a different technique: this problem can also be solved with <strong>BFS</strong>. Treat each string as a
+  graph node, link it to every string with one character removed, and stop at the first level that contains a valid string.
+  That&rsquo;s a natural bridge into graphs.
+</div>
+
+<hr>
+
+<h3>Primary source</h3>
+<p>Read <strong>Chapter 5, &ldquo;Complete search&rdquo;</strong> (about 8 pages: subsets, permutations, backtracking, pruning) of
+Antti Laaksonen&rsquo;s <a href="https://cses.fi/book/book.pdf"><em>Competitive Programmer&rsquo;s Handbook</em></a>, which is free from CSES.
+For more practice, the USACO Guide module
+<a href="https://usaco.guide/bronze/complete-rec">&ldquo;Complete Search with Recursion&rdquo;</a> has graded problems.</p>
+
+<p class="callout">Anything unclear? <strong>Ask me.</strong> I&rsquo;m your teacher in this workspace. Tell me where you
+got stuck, paste a failing output, or ask why a pruning rule is safe. When you&rsquo;ve solved it, tell me how it went and
+I&rsquo;ll plan the next lesson around it.</p>
+
+</body>
+</html>
