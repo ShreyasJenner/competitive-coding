@@ -9,6 +9,11 @@
 //
 // Steps are plain data, so a lesson can precompute them, or generate them by
 // running an instrumented JS copy of the algorithm (see Stepper.recorder).
+//
+// Optional tape, for algorithms that scan a string with a cursor (parsers):
+//   step.tape = { text: "!(t)", pos: 2, from: 0 }
+// draws the string above the code, with the cursor on text[pos] and the span
+// [from, pos) (what the running call has consumed so far) underlined.
 (function () {
   function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -43,12 +48,29 @@
 
     const grid = el("div", "st-grid");
     grid.append(codeBox, side);
-    root.append(grid, note, controls);
+    const tapeBox = el("div", "st-tape");
+    root.append(tapeBox, grid, note, controls);
 
     let k = 0;
     function render() {
       const s = steps[k];
       lines.forEach((ln, i) => ln.classList.toggle("st-active", i + 1 === s.line));
+
+      tapeBox.innerHTML = "";
+      tapeBox.hidden = !s.tape;
+      if (s.tape) {
+        const { text, pos, from = pos } = s.tape;
+        // One extra cell so the cursor can sit just past the end.
+        [...text, " "].forEach((ch, i) => {
+          let cls = "st-cell";
+          if (i < pos) cls += " st-eaten";
+          if (i >= from && i < pos) cls += " st-span";
+          if (i === pos) cls += " st-cur";
+          const cell = el("span", cls, ch);
+          cell.append(el("span", "st-idx", String(i)));
+          tapeBox.append(cell);
+        });
+      }
 
       stackBox.innerHTML = "";
       stackBox.append(el("div", "st-h", "Call stack (top = running now)"));
@@ -92,8 +114,9 @@
       call(frame) { stack.push(frame); },
       ret() { stack.pop(); },
       emit(v) { out.push(v); },
-      snap(line, vars, note) {
-        steps.push({ line, stack: [...stack], vars: { ...vars }, out: [...out], note });
+      // `extra` is merged into the step, e.g. { tape: { text, pos, from } }.
+      snap(line, vars, note, extra) {
+        steps.push({ line, stack: [...stack], vars: { ...vars }, out: [...out], note, ...extra });
       },
     };
   }

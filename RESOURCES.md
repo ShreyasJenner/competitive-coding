@@ -11,6 +11,9 @@
 - [doocs LeetCode](https://leetcode.doocs.org/en/)
   Problem statements and constraints mirror, with multiple solutions. Use for: confirming constraints.
 
+- [_Crafting Interpreters_ by Robert Nystrom, ch. 6 "Parsing Expressions" (free online)](https://craftinginterpreters.com/parsing-expressions.html)
+  The clearest free explanation of recursive descent: each grammar rule becomes a function, and a `current` cursor marks the next token. Use for: parsing/expression problems (1106, 394, 224, 726). §6.2 is the core; §6.3 covers error handling, which LeetCode rarely needs.
+
 ## Wisdom (Communities)
 
 - [Codeforces blogs](https://codeforces.com/blog/)

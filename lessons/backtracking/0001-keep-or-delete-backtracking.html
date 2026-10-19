@@ -5,16 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Keep or Delete</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
-<link rel="stylesheet" href="../assets/style.css">
-<script src="../assets/quiz.js"></script>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/course.js"></script>
+<script src="../../assets/quiz.js"></script>
 </head>
 <body>
 
-<nav class="course no-print">
-  Lesson 1 &middot;
-  <a href="../reference/backtracking.html">Reference: backtracking</a>
-  <a href="../MISSION.md">Mission</a>
-  <a href="0002-dfs-the-tree-you-never-build.html">New to DFS? Lesson 2 &rarr;</a>
+<nav class="course no-print" data-topic="backtracking" data-file="0001-keep-or-delete-backtracking.html">
+  <a href="../index.html">All topics</a>
+  <a href="../../reference/backtracking.html">Reference sheet</a>
 </nav>
 
 <h1>Keep or Delete</h1>
@@ -236,7 +235,7 @@ instead of silently giving a wrong answer.</p>
   <summary>Hint 3: choose / explore / un-choose</summary>
   <p>Keeping a character is <code>path.push_back(c)</code>, then recurse, then <code>path.pop_back()</code>. This is the
   backtracking pattern: undo your choice so the sibling branch sees a clean state. See
-  <a href="../reference/backtracking.html">the reference sheet</a>.</p>
+  <a href="../../reference/backtracking.html">the reference sheet</a>.</p>
 </details>
 
 <p>Once all seven pass, submit on <a href="https://leetcode.com/problems/remove-invalid-parentheses/">LeetCode</a>.</p>

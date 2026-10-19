@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recursive Descent Reference</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="course no-print"><a href="../lessons/index.html">All topics &amp; lessons</a></nav>
+
+<h1>Recursive Descent</h1>
+<p class="subtitle">Quick reference &middot; C++ &middot; source:
+<a href="https://craftinginterpreters.com/parsing-expressions.html#recursive-descent-parsing"><em>Crafting Interpreters</em> &sect;6.2</a></p>
+
+<h2>Spot it</h2>
+<ul>
+  <li>Input is a string with <strong>nested brackets</strong> that you must evaluate, decode or build a structure from</li>
+  <li>The statement gives a <strong>grammar</strong> (&ldquo;<code>X</code> is either &hellip; or <code>op(X, X, &hellip;)</code>&rdquo;)</li>
+  <li>The first character of each piece decides what kind of piece it is</li>
+  <li>Examples: <a href="https://leetcode.com/problems/parsing-a-boolean-expression/">1106</a>,
+  <a href="https://leetcode.com/problems/decode-string/">394</a>,
+  <a href="https://leetcode.com/problems/mini-parser/">385</a>,
+  <a href="https://leetcode.com/problems/basic-calculator/">224</a>,
+  <a href="https://leetcode.com/problems/number-of-atoms/">726</a></li>
+</ul>
+
+<h2>The contract</h2>
+<div class="callout"><code>parse(s, i)</code> reads exactly <strong>one</strong> expression starting at <code>s[i]</code>,
+returns its value, and leaves <code>i</code> <strong>just after</strong> it.</div>
+<ul>
+  <li>One function per grammar rule. Branch on the first character.</li>
+  <li>The cursor is <strong>shared</strong>: use <code>int&amp; i</code> or a member, never a copy.</li>
+  <li>After a child returns, the caller looks only at <code>s[i]</code> (a separator or a closing bracket) to decide
+  what comes next.</li>
+</ul>
+<p>(<a href="../lessons/recursive-descent/0004-one-call-one-expression.html">Lesson 4</a>)</p>
+
+<h2>Pitfalls</h2>
+<table>
+  <tr><th>Bug</th><th>Symptom</th></tr>
+  <tr><td>cursor passed by value</td><td>caller re-reads the child, then runs off the end or loops</td></tr>
+  <tr><td>early return once the value is known</td><td>cursor stuck inside the brackets, so the parent misreads the leftovers</td></tr>
+  <tr><td>forgetting to step past <code>)</code></td><td>parent sees <code>)</code> and ends its own list too soon</td></tr>
+</table>
+
+<h2>Cost</h2>
+<p>Time O(n): each character is consumed once. Stack depth equals the nesting depth, at most about n/3 for
+<code>!(&hellip;)</code>-style grammars. For n &le; 2&middot;10<sup>4</sup> that&rsquo;s fine. For much deeper input, switch to
+an explicit stack.</p>
+
+<!-- Template is added after the learner solves 1106 themselves. -->
+
+</body>
+</html>

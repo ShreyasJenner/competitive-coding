@@ -9,6 +9,8 @@
 </head>
 <body>
 
+<nav class="course no-print"><a href="../lessons/index.html">All topics &amp; lessons</a></nav>
+
 <h1>Backtracking</h1>
 <p class="subtitle">Quick reference &middot; C++ &middot; source: <a href="https://cses.fi/book/book.pdf">CPH ch. 5</a></p>
 
@@ -37,7 +39,7 @@
 <p>A node is one call plus its state, and its children are the recursive calls it makes, one per choice.
 The tree is never stored; it exists only as the call stack. Shared state (like <code>path</code>) must be restored
 before returning: choose, explore, un-choose. State passed by value (like budgets) needs no undo.
-(<a href="../lessons/0002-dfs-the-tree-you-never-build.html">Lesson 2</a>)</p>
+(<a href="../lessons/backtracking/0002-dfs-the-tree-you-never-build.html">Lesson 2</a>)</p>
 
 <pre><code>void dfs(int i) {            // all subsequences: 2^n leaves
   if (i == n) { out.push_back(path); return; }
@@ -58,7 +60,7 @@ before returning: choose, explore, un-choose. State passed by value (like budget
 
 <h2>Skip equal siblings</h2>
 <p>Equal characters are interchangeable, so only <em>how many</em> you take from a run matters. Build one representative.
-(<a href="../lessons/0003-skip-equal-siblings.html">Lesson 3</a>)</p>
+(<a href="../lessons/backtracking/0003-skip-equal-siblings.html">Lesson 3</a>)</p>
 <table>
   <tr><th>Tree shape</th><th>Rule</th></tr>
   <tr><td>Binary keep/delete</td><td>No delete child for <code>s[i]</code> if <code>s[i] == s[i-1]</code> and <code>s[i-1]</code> was kept
@@ -73,7 +75,7 @@ before returning: choose, explore, un-choose. State passed by value (like budget
   <tr><th>Need</th><th>How</th></tr>
   <tr><td>Is it valid?</td><td>Scan with <code>open</code>, never let it go &lt; 0, and finish at 0</td></tr>
   <tr><td>Min removals</td><td>Unmatched <code>)</code> &rarr; <code>rmR++</code>; leftover <code>open</code> &rarr; <code>rmL</code></td></tr>
-  <tr><td>All min-removal results</td><td>Keep/delete DFS within budget, keep <code>)</code> only if <code>open &gt; 0</code> (<a href="../lessons/0001-keep-or-delete-backtracking.html">Lesson 1</a>)</td></tr>
+  <tr><td>All min-removal results</td><td>Keep/delete DFS within budget, keep <code>)</code> only if <code>open &gt; 0</code> (<a href="../lessons/backtracking/0001-keep-or-delete-backtracking.html">Lesson 1</a>)</td></tr>
 </table>
 
 <h2>Cost</h2>

@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Call, One Expression</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/course.js"></script>
+<script src="../../assets/quiz.js"></script>
+<script src="../../assets/stepper.js"></script>
+</head>
+<body>
+
+<nav class="course no-print" data-topic="recursive-descent" data-file="0004-one-call-one-expression.html">
+  <a href="../index.html">All topics</a>
+  <a href="../../reference/recursive-descent.html">Reference sheet</a>
+</nav>
+
+<h1>One Call, One Expression</h1>
+<p class="subtitle">LC 1106 &middot; the tree is written in the string, so read it with one call per node</p>
+
+<div class="win">
+  <strong>Your win today:</strong> a recursive parser of about 20 lines for
+  <a href="https://leetcode.com/problems/parsing-a-boolean-expression/">LC 1106</a> that passes all 14 local cases. Those
+  include 6,666 levels of nesting and 3,000 random expressions.
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>1. The string is a tree</h2>
+
+<p>In <a href="../backtracking/0002-dfs-the-tree-you-never-build.html">Lesson 2</a> the tree existed only in the call stack. Here it is
+spelled out in the input. Every operator is a node, and its children are the expressions between its brackets, separated
+by commas (<a href="https://leetcode.com/problems/parsing-a-boolean-expression/description/">problem statement</a>):</p>
+
+<figure>
+<svg viewBox="0 0 400 250" role="img" aria-label="Parse tree of |(&amp;(t,!(f)),f)">
+  <g stroke="currentColor" stroke-opacity=".45" stroke-width="1.2">
+    <line x1="200" y1="38" x2="120" y2="92"/><line x1="200" y1="38" x2="290" y2="92"/>
+    <line x1="120" y1="112" x2="70" y2="162"/><line x1="120" y1="112" x2="175" y2="162"/>
+    <line x1="175" y1="182" x2="175" y2="208"/>
+  </g>
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="17" fill="currentColor" text-anchor="middle">
+    <text x="200" y="32">|</text><text x="120" y="108">&amp;</text><text x="290" y="108">f</text>
+    <text x="70" y="178">t</text><text x="175" y="178">!</text><text x="175" y="226">f</text>
+  </g>
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="10.5" fill="currentColor" fill-opacity=".6" text-anchor="start">
+    <text x="214" y="30">[0..13]</text><text x="134" y="106">[2..10]</text><text x="302" y="106">[12]</text>
+    <text x="80" y="176">[4]</text><text x="187" y="176">[6..9]</text><text x="187" y="224">[8]</text>
+  </g>
+</svg>
+<figcaption><code>"|(&amp;(t,!(f)),f)"</code>. The brackets next to each node give the slice of the string it occupies. A
+node&rsquo;s slice contains exactly its children&rsquo;s slices, plus the punctuation around them.</figcaption>
+</figure>
+
+<div class="drill">
+  <p class="q">Predict, using <code>s = "|(&amp;(t,!(f)),f)"</code> (indices 0&ndash;13). Answer the last two from the string
+  alone, without the figure.</p>
+  <div class="row"><code>children of |</code> <label>count <input data-expect="2"></label></div>
+  <div class="row"><code>value of s</code> <label>t / f <input data-expect="t"></label></div>
+  <div class="row"><code>expr at s[2]</code> <label>first index after it <input data-expect="11"></label></div>
+  <div class="row"><code>expr at s[6]</code> <label>first index after it <input data-expect="10"></label></div>
+  <button class="check">Check</button>
+  <p class="explain"><code>!(f)</code> is t, so <code>&amp;(t,t)</code> is t, and <code>|(t,f)</code> is t. The expression at
+  2 is <code>&amp;(t,!(f))</code>, which closes at 10, so whatever reads it should stop at 11, the comma. The expression at
+  6 is <code>!(f)</code>, which closes at 9, so the next index is 10.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>2. The contract</h2>
+
+<p>The last two questions are exactly the work your function has to do. Write one function and hold it to this promise:</p>
+
+<div class="callout"><strong>parse</strong> reads exactly <em>one</em> expression starting at the cursor, returns its
+value, and leaves the cursor on the character <em>just after</em> it.</div>
+
+<p>The promise makes the caller simple. After a child returns, the caller doesn&rsquo;t need to know how long that child was:
+the cursor is already on a <code>,</code> (more children follow) or a <code>)</code> (that was the last one). The first
+character alone tells you which grammar rule you are in:</p>
+
+<table>
+  <tr><th>s[i]</th><th>shape</th><th>children</th></tr>
+  <tr><td><code>t</code> <code>f</code></td><td>one character</td><td>none</td></tr>
+  <tr><td><code>!</code></td><td><code>!(</code> <em>expr</em> <code>)</code></td><td>exactly 1</td></tr>
+  <tr><td><code>&amp;</code> <code>|</code></td><td><code>op(</code> <em>expr</em> { <code>,</code> <em>expr</em> } <code>)</code></td><td>1 or more</td></tr>
+</table>
+
+<p>One function per grammar rule, with a cursor moving forward through the input, is called <strong>recursive
+descent</strong>. Nystrom describes it as a parser that is a direct translation of the grammar into code
+(<a href="https://craftinginterpreters.com/parsing-expressions.html#recursive-descent-parsing"><em>Crafting
+Interpreters</em> &sect;6.2</a>). His parser keeps the same kind of cursor: <code>current</code> &ldquo;points to the next
+token eagerly waiting to be parsed.&rdquo;</p>
+
+<span class="sidenote">The input is guaranteed valid, so you need no error handling. That is the only reason the code
+stays short. Real parsers spend most of their lines on malformed input (&sect;6.3 of the same chapter).</span>
+
+<!-- ───────────────────────────────────────── -->
+<h2>3. See it</h2>
+
+<p>Step through it. The highlighted cell is the cursor. The underline marks what the <em>running</em> call has consumed so
+far. Every return leaves the cursor just past the underline. You can also type your own expression.</p>
+
+<p class="no-print"><label>Expression <input class="st-input" id="ex-in" value="|(&amp;(t,!(f)),f)" style="width:14rem"></label>
+<span id="ex-err" class="score"></span></p>
+<div class="stepper no-print" id="ex"></div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>4. Check yourself</h2>
+
+<div class="quiz" data-answer="2">
+  <p class="q">1. Why must the cursor be <code>int&amp;</code> (or a member), and not a plain <code>int</code>?</p>
+  <button class="opt">Copying an int costs more than a reference</button>
+  <button class="opt">Recursion in C++ forbids passing ints by value</button>
+  <button class="opt">The caller would re-read the child&rsquo;s characters</button>
+  <button class="opt">The compiler rejects modifying parameters passed by value</button>
+  <p class="explain">The child&rsquo;s progress is half of the contract. With a copy, the child advances <em>its own</em>
+  <code>i</code>, and the caller&rsquo;s cursor stays on the child&rsquo;s first character. In the test, this version runs
+  off the end of the string on the very first case. Compare Lesson 2, where budgets <em>should</em> be copies: there each
+  child gets its own value, but here every call shares one position in one string.</p>
+</div>
+
+<div class="quiz" data-answer="3">
+  <p class="q">2. In <code>&amp;(f,&hellip;)</code> the answer is already known after the first child. Can you
+  <code>return false</code> right there?</p>
+  <button class="opt">Yes, the remaining children can never change it</button>
+  <button class="opt">No, because &amp; needs at least two children</button>
+  <button class="opt">Only if the next character is a comma</button>
+  <button class="opt">No, the cursor must still pass every child</button>
+  <p class="explain">The <em>value</em> is decided, but the contract isn&rsquo;t met: the cursor is still inside the
+  <code>&amp;(&hellip;)</code>. The caller would then read the leftover <code>,t)</code> as if it were its own. Try
+  <code>|(&amp;(f,t),f)</code>: the early return gives <em>true</em>. You may skip <em>evaluating</em> the rest, but you
+  still have to move past it.</p>
+</div>
+
+<div class="quiz" data-answer="1">
+  <p class="q">3. On a 2&middot;10<sup>4</sup>-character input, how deep can the recursion get?</p>
+  <button class="opt">Roughly 20,000 nested calls deep</button>
+  <button class="opt">Roughly 6,700 nested calls deep</button>
+  <button class="opt">Roughly 140 nested calls deep</button>
+  <button class="opt">Roughly 3 nested calls deep</button>
+  <p class="explain">Each level of nesting costs at least 3 characters (<code>!(</code> &hellip; <code>)</code>), so the depth
+  is at most n/3 &asymp; 6,667. Those frames are tiny compared with the default stack, and the test runs exactly that case.
+  Time is O(n), because every character is consumed exactly once.</p>
+</div>
+<p class="score"></p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>5. Your turn: <code>usr/src/leetcode/1106.cpp</code></h2>
+
+<ol>
+  <li>Write the helper that honours the contract, then call it from <code>parseBoolExpr</code>. Choose the cursor&rsquo;s
+  type on purpose.</li>
+  <li>Build it one row of the table at a time, and run <code>./test.sh 1106</code> after each. Single values pass first,
+  then <code>!</code>, then <code>&amp;</code>/<code>|</code>.</li>
+</ol>
+
+<details><summary>Hint 1</summary>
+<p>Only one row of the table needs a loop. What character tells that loop to stop, and where is the cursor when it checks?</p></details>
+<details><summary>Hint 2</summary>
+<p>Right after any child returns, <code>s[i]</code> is either <code>,</code> or <code>)</code>. A comma means skip it and
+parse another child. A closing bracket means skip it and you&rsquo;re done.</p></details>
+<details><summary>Hint 3</summary>
+<p>Start an <code>&amp;</code> at <em>true</em> and an <code>|</code> at <em>false</em>, then combine each child&rsquo;s value
+into it. Return only after you have stepped past the <code>)</code>.</p></details>
+
+<p>The test file includes a stack-based reference evaluator. Don&rsquo;t read it until you&rsquo;re green, because it&rsquo;s
+the second formulation we&rsquo;ll compare against.</p>
+
+<hr>
+
+<h3>Primary source</h3>
+<p>Read <a href="https://craftinginterpreters.com/parsing-expressions.html#recursive-descent-parsing"><em>Crafting
+Interpreters</em> &sect;6.2, Recursive Descent Parsing</a> by Robert Nystrom (about 15 minutes). It covers the same idea on
+a richer grammar. Notice how each grammar rule becomes a method and how <code>advance()</code> moves the cursor. Once
+you&rsquo;re green, compare with <a href="https://walkccc.me/LeetCode/problems/1106/">walkccc&rsquo;s 1106</a>, which
+uses the same <code>int&amp; i</code> design.</p>
+
+<p class="callout">Stuck, or something feels hand-wavy? <strong>Ask me.</strong> Paste your helper or the
+<code>./test.sh 1106</code> output and I&rsquo;ll point at the line without rewriting it.</p>
+
+<script>
+  const CODE = [
+    "parse(): look at s[i]",
+    "  t or f → step past it, return its value",
+    "  !      → step past \"!(\"",
+    "           v = parse(); step past \")\"; return !v",
+    "  & or | → step past \"op(\"; acc = (op is &)",
+    "           repeat: v = parse(); fold v into acc",
+    "             s[i] is ',' → step past it, repeat",
+    "             s[i] is ')' → step past it, return acc",
+  ];
+
+  // Instrumented copy of the parser. Throws on malformed input.
+  function trace(s) {
+    const r = Stepper.recorder();
+    let i = 0;
+    const T = (b) => (b ? "t" : "f");
+    const need = (ok) => { if (!ok) throw new Error("not a valid expression"); };
+    function parse() {
+      const start = i, c = s[i];
+      need("tf!&|".includes(c) && c !== undefined);
+      r.call(`parse  i=${start}  '${c}'`);
+      const snap = (line, vars, note) => r.snap(line, { i, ...vars }, note, { tape: { text: s, pos: i, from: start } });
+      snap(1, {}, `New call at i=${start}. It must consume one whole expression starting with '${c}'.`);
+      let v;
+      if (c === "t" || c === "f") {
+        i++; v = c === "t";
+        snap(2, { returns: T(v) }, `A single character. The cursor moves to ${i}, just past it.`);
+      } else if (c === "!") {
+        need(s[i + 1] === "("); i += 2;
+        snap(3, {}, `Skipped "!(" and handed the cursor to a child call.`);
+        const k = parse();
+        need(s[i] === ")"); i++;
+        v = !k;
+        snap(4, { child: T(k), returns: T(v) }, `The child left the cursor on ')'. Step past it and return !${T(k)} = ${T(v)}.`);
+      } else {
+        need(s[i + 1] === "("); i += 2;
+        let acc = c === "&";
+        snap(5, { acc: T(acc) }, `Skipped "${c}(". The accumulator starts at ${T(acc)}.`);
+        for (;;) {
+          const k = parse();
+          acc = c === "&" ? acc && k : acc || k;
+          snap(6, { child: T(k), acc: T(acc) }, `The child returned ${T(k)} and the cursor is on '${s[i] ?? "end"}'.`);
+          if (s[i] === ",") { i++; snap(7, { acc: T(acc) }, "A comma means another child follows."); continue; }
+          need(s[i] === ")"); i++;
+          snap(8, { returns: T(acc) }, `Closing bracket: step past it to ${i} and return ${T(acc)}.`);
+          break;
+        }
+        v = acc;
+      }
+      r.ret();
+      return v;
+    }
+    const v = parse();
+    need(i === s.length);
+    r.snap(1, { result: T(v) }, `Top-level call returned ${T(v)}, with the cursor at ${i} = s.length. Everything was consumed exactly once.`,
+           { tape: { text: s, pos: i, from: 0 } });
+    return r.steps;
+  }
+
+  function show() {
+    const s = document.getElementById("ex-in").value.replace(/\s/g, "").slice(0, 40);
+    const err = document.getElementById("ex-err");
+    try {
+      Stepper.mount(document.getElementById("ex"), { code: CODE, steps: trace(s) });
+      err.textContent = "";
+    } catch (e) {
+      err.textContent = e.message;
+    }
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("ex-in").addEventListener("input", show);
+    show();
+  });
+</script>
+</body>
+</html>

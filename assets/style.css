@@ -105,6 +105,12 @@ summary { cursor: pointer; color: var(--accent); }
 
 nav.course { font-size: .8rem; color: var(--muted); margin-bottom: 2rem; }
 nav.course a { margin-right: 1rem; }
+nav.course { border-bottom: 1px solid var(--rule); padding-bottom: .8rem; }
+nav.course .course-list { margin: .4rem 0; padding-left: 1.6rem; columns: 2 14rem; }
+nav.course .course-step { display: flex; justify-content: space-between; gap: 1rem; }
+nav.course .course-step .next { margin-left: auto; margin-right: 0; }
+.course-list li.here { color: var(--fg); font-weight: 600; }
+.course-list li { margin: .1rem 0; }
 
 /* ---- quiz.js widgets ---- */
 .quiz, .drill { margin: 1.4rem 0; padding: 1rem; border: 1px solid var(--rule); border-radius: 4px; }
@@ -181,6 +187,17 @@ nav.course a { margin-right: 1rem; }
 .st-count { font-size: .8rem; color: var(--muted); }
 .st-input { font: inherit; font-family: var(--mono); font-size: .85rem; width: 6rem; color: var(--fg);
   background: var(--bg); border: 1px solid var(--rule); border-radius: 3px; padding: .15rem .3rem; }
+
+/* stepper tape: a string with a cursor */
+.st-tape { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 0 .9rem; font-family: var(--mono); font-size: .95rem; }
+.st-tape[hidden] { display: none; }
+.st-cell { position: relative; display: inline-block; width: 1.35em; text-align: center; padding: .15rem 0 .85rem;
+  border-bottom: 3px solid transparent; border-radius: 2px; white-space: pre; }
+.st-idx { position: absolute; left: 0; right: 0; bottom: .05rem; font-size: .55rem; color: var(--muted); }
+.st-eaten { color: var(--muted); }
+.st-span { border-bottom-color: var(--accent); color: var(--fg); }
+.st-cur { background: var(--accent); color: var(--bg); }
+.st-cur .st-idx { color: var(--bg); }
 
 /* ---- strings with deleted characters (e.g. "(<span class=del>(</span>)") ---- */
 .del { color: var(--accent); text-decoration: line-through; opacity: .7; }
