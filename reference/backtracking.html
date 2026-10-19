@@ -52,8 +52,21 @@ before returning: choose, explore, un-choose. State passed by value (like budget
 <ol>
   <li>Can you compute a <strong>budget</strong> up front (the minimum cost, or the count of each thing to remove)? Never overspend it.</li>
   <li>Is there an <strong>invariant</strong> that, once broken, can never be repaired (balance &lt; 0, sum &gt; target)? Cut there.</li>
-  <li>Can different paths produce the <strong>same output</strong>? Dedupe with a <code>set</code>, or skip equal siblings.</li>
+  <li>Can different paths produce the <strong>same output</strong>? Skip equal siblings (below). A <code>set</code> is the
+  fallback, but it throws work away instead of avoiding it.</li>
 </ol>
+
+<h2>Skip equal siblings</h2>
+<p>Equal characters are interchangeable, so only <em>how many</em> you take from a run matters. Build one representative.
+(<a href="../lessons/0003-skip-equal-siblings.html">Lesson 3</a>)</p>
+<table>
+  <tr><th>Tree shape</th><th>Rule</th></tr>
+  <tr><td>Binary keep/delete</td><td>No delete child for <code>s[i]</code> if <code>s[i] == s[i-1]</code> and <code>s[i-1]</code> was kept
+  (deletions come from the front of a run). Pass <code>prevKept</code> down.</td></tr>
+  <tr><td>Loop over choices</td><td><code>if (j &gt; start &amp;&amp; a[j] == a[j-1]) continue;</code> (sort first if order doesn&rsquo;t
+  matter, as in <a href="https://walkccc.me/LeetCode/problems/90/">LC 90</a>)</td></tr>
+</table>
+<p>Check it against a brute force on random inputs. A wrong dedup rule passes the hand-picked cases more often than you&rsquo;d expect.</p>
 
 <h2>Parentheses toolkit</h2>
 <table>

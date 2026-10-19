@@ -1,5 +1,4 @@
 #include <iostream>
-#include <set>
 #include <string>
 #include <vector>
 #include <tuple>
@@ -8,7 +7,7 @@ class Solution {
     private:
     std::string s, path;
     int s_len;
-    std::set<std::string> out;
+    std::vector<std::string> out;
     /* 
     Function that goes through the string and returns the allowed deletions of the '(' and ')' characters
     as a tuple
@@ -33,25 +32,35 @@ class Solution {
         return std::make_tuple(rmL, rmR);
     }
 
-    /* DFS Function that builds the path with valid parantheses */
+    /* 
+    DFS Function that builds the path with valid parantheses
+    Optimize by moving deletion to front so that duplicate subtrees are skipped
+    */
     void dfs(int i, int open, int rmL, int rmR) {
         if(i == this->s_len) {
             if(open == 0 && rmL == 0 && rmR == 0) {
-                this->out.insert(path);
+                this->out.push_back(path);
             }
             return;
         }
 
         if(this->s[i] == '(') {
             if(rmL > 0) {
-                this->dfs(i + 1, open, rmL - 1, rmR);
+                if(this->path.size() > 0 && *this->path.rbegin() == '(') {
+                } else {
+                    this->dfs(i + 1, open, rmL - 1, rmR);
+                }
             }
             this->path.push_back(this->s[i]);
             this->dfs(i + 1, open + 1, rmL, rmR);
             this->path.pop_back();
         } else if(this->s[i] == ')') {
             if(rmR > 0) {
-                this->dfs(i + 1, open, rmL, rmR - 1);
+                if(this->path.size() > 0 && *this->path.rbegin() == ')') {
+                } else {
+                    this->dfs(i + 1, open, rmL, rmR - 1);
+                }
+                
             }
             if(open > 0) {
                 this->path.push_back(this->s[i]);

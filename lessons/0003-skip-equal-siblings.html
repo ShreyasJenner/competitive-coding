@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skip Equal Siblings</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/quiz.js"></script>
+</head>
+<body>
+
+<nav class="course no-print">
+  Lesson 3 &middot;
+  <a href="0002-dfs-the-tree-you-never-build.html">&larr; Lesson 2: The Implicit Tree</a>
+  <a href="0001-keep-or-delete-backtracking.html">Lesson 1: Keep or Delete</a>
+  <a href="../reference/backtracking.html">Reference: backtracking</a>
+</nav>
+
+<h1>Skip Equal Siblings</h1>
+<p class="subtitle">Your 301 is correct, but its <code>std::set</code> is hiding wasted work</p>
+
+<div class="win">
+  <strong>Your win today:</strong> delete <code>std::set</code> from 301 and add one condition, so that every answer is
+  built exactly once. On <code>"(((((((((((((((("</code> your <code>dfs</code> currently makes <strong>131,071</strong>
+  calls. Afterwards it makes <strong>153</strong>.
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>1. Predict first</h2>
+
+<p>Your <code>dfs</code> reaches accepted leaves and inserts them into a set. The set quietly drops any string it
+already has. <strong>How many times is each answer actually built?</strong> Work it out on paper. The budget for each
+input is in brackets.</p>
+
+<div class="drill">
+  <p class="q">How many accepted leaves produce this answer in your current 301?</p>
+  <div class="row"><code>"()))))"</code> <label>rmR=4 &rarr; <code>"()"</code> &times; <input data-expect="5"></label></div>
+  <div class="row"><code>"((()"</code> <label>rmL=2 &rarr; <code>"()"</code> &times; <input data-expect="3"></label></div>
+  <div class="row"><code>"((a))))"</code> <label>rmR=2 &rarr; <code>"((a))"</code> &times; <input data-expect="6"></label></div>
+  <div class="row"><code>"())(()"</code> <label>rmL=1, rmR=1 &rarr; <code>"()()"</code> &times; <input data-expect="4"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">In <code>"((a))))"</code> the four <code>)</code> form one <strong>run</strong>, and two of them must
+  go. Any 2 of the 4 will do, which gives C(4,2) = 6 leaves that all spell <code>"((a))"</code>. In <code>"())(()"</code> you
+  delete one of the <code>))</code> <em>and</em> one of the <code>((</code>, so 2 &times; 2 = 4.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>2. Which one you delete doesn&rsquo;t matter</h2>
+
+<p>Within a <strong>run</strong> (consecutive identical characters), deleting the 1st <code>)</code> or the 3rd
+<code>)</code> leaves the same string. The only thing that matters is <em>how many</em> you delete from the run. So
+choose one representative for each count, and let the search build only that one:</p>
+
+<div class="callout"><strong>The rule:</strong> in each run, only delete from the <em>front</em>.
+In keep/delete terms: <em>if <code>s[i] == s[i-1]</code> and you <strong>kept</strong> <code>s[i-1]</code>, then
+<code>s[i]</code> gets no delete child.</em> Once you keep one character from a run, you keep the rest of it.</div>
+
+<p>This can&rsquo;t lose an answer. Take any deletion pattern, slide each run&rsquo;s deletions to the front of that run,
+and you get the same string. So every answer still has one pattern the rule allows. The rule also helps more than the
+set did. The set removed duplicates <em>after</em> they were built, but the rule never enters those subtrees in the first place.</p>
+
+<span class="sidenote">This is the &ldquo;skip equal siblings&rdquo; trick. Solutions that loop over choices write it as
+<code>if (i &gt; start &amp;&amp; s[i] == s[i-1]) continue;</code>, as in
+<a href="https://walkccc.me/LeetCode/problems/90/">LC 90 Subsets II</a>. Your binary keep/delete tree needs the version
+above.</span>
+
+<!-- ───────────────────────────────────────── -->
+<h2>3. See it</h2>
+
+<p>Each row shows one accepted leaf, with the deleted characters <span class="del">struck</span>. Turn the rule on and
+watch which pattern survives in each group.</p>
+
+<div class="leafbox no-print">
+  <div class="controls">
+    <label>Input <input class="st-input" id="lf-in" value="((a))))" maxlength="16"></label>
+    <label><input type="checkbox" id="lf-rule"> apply the rule</label>
+  </div>
+  <p class="stats" id="lf-stats"></p>
+  <div id="lf-out"></div>
+</div>
+
+<p>Try <code>"(((((((((((((((("</code>. Without the rule, every subset of the 16 brackets is a different path, which gives
+2<sup>17</sup>&minus;1 calls for one empty string.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>4. Check yourself</h2>
+
+<div class="quiz" data-answer="1">
+  <p class="q">1. <code>s = "())"</code>, <code>rmR = 1</code>. Which deletion does the rule keep?</p>
+  <button class="opt">delete index 0 only</button>
+  <button class="opt">delete index 1 only</button>
+  <button class="opt">delete index 2 only</button>
+  <button class="opt">delete nothing at all</button>
+  <p class="explain">Indices 1&ndash;2 are a run of <code>)</code>, so deletion comes from the front. Deleting index 2 is
+  blocked whenever index 1 was kept.</p>
+</div>
+
+<div class="quiz" data-answer="3">
+  <p class="q">2. Why can the rule never lose a valid answer?</p>
+  <button class="opt">Deleting later brackets always breaks the open count</button>
+  <button class="opt">The leaf check rejects every string from runs</button>
+  <button class="opt">Runs of equal brackets never appear in answers</button>
+  <button class="opt">Any deletion pattern shifts to the run&rsquo;s front</button>
+  <p class="explain">Sliding deletions within a run doesn&rsquo;t change the resulting string, so every answer keeps at least
+  one pattern the rule allows.</p>
+</div>
+
+<div class="quiz" data-answer="0">
+  <p class="q">3. Why do <em>calls</em> drop from 131,071 to 153, and not just the number of leaves?</p>
+  <button class="opt">The rule cuts subtrees before they are explored</button>
+  <button class="opt">The compiler caches calls that share equal arguments</button>
+  <button class="opt">A vector inserts strings faster than a set</button>
+  <button class="opt">The budget check now ends at depth one</button>
+  <p class="explain">A blocked delete child is never called, so its entire subtree is never searched. This is the same
+  kind of pruning as Lesson 1&rsquo;s budget. <code>std::set</code> could only throw away results after the work was done.</p>
+</div>
+<p class="score"></p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>5. Your turn: <code>usr/src/leetcode/301.cpp</code></h2>
+
+<ol>
+  <li>Swap <code>std::set&lt;std::string&gt; out</code> for a <code>std::vector</code> and <code>insert</code> for
+  <code>push_back</code>. <strong>Predict which tests will fail</strong>, then run <code>./test.sh 301</code>. The tests no
+  longer forgive duplicates.</li>
+  <li>Add the rule and get every case green. The last case compares you against a brute force on 3,000 random strings.</li>
+</ol>
+
+<details><summary>Hint 1</summary>
+<p>At index <code>i</code>, what does <code>dfs</code> need to know that it doesn&rsquo;t currently know?</p></details>
+<details><summary>Hint 2</summary>
+<p>Whether <code>s[i-1]</code> was kept or deleted. Every call site already knows which kind of child it is creating, so it can
+pass that information down as a parameter, just like the budget.</p></details>
+<details><summary>Hint 3</summary>
+<p>Before, the delete child existed when &ldquo;the budget is left&rdquo;. Now it exists when &ldquo;the budget is left
+<strong>and not</strong> (same character as before <strong>and</strong> that one was kept)&rdquo;. Letters don&rsquo;t need it,
+because they are never deleted.</p></details>
+
+<p>There is more than one correct canonical choice. If you find a different rule, the random test will tell you whether it
+holds.</p>
+
+<hr>
+
+<h3>Primary source</h3>
+<p>Once you&rsquo;re green, read <a href="https://walkccc.me/LeetCode/problems/301/">walkccc&rsquo;s 301</a>. It searches a
+<em>different</em> tree (&ldquo;which position do I delete next?&rdquo;), and its <code>s[i] == s[i-1]</code> skip is the
+same idea in that form. Comparing the two trees is the best check that you understand the rule. Then solve
+<a href="https://leetcode.com/problems/subsets-ii/">LC 90 Subsets II</a> cold, as practice in a new setting.</p>
+
+<p class="callout">Stuck, or something feels hand-wavy? <strong>Ask me.</strong> Paste your <code>dfs</code> or the
+<code>./test.sh 301</code> output and I&rsquo;ll point at the line without rewriting it.</p>
+
+<script>
+  // Mirrors the 301 keep/delete DFS and records which indices each accepted leaf deleted.
+  function search(s, rule) {
+    let open = 0, rmR = 0, calls = 0;
+    for (const c of s) {
+      if (c === "(") open++;
+      else if (c === ")") { if (open) open--; else rmR++; }
+    }
+    const del = new Array(s.length).fill(false), leaves = [];
+    function dfs(i, open, rmL, rmR, prevKept) {
+      calls++;
+      if (i === s.length) {
+        if (open === 0 && rmL === 0 && rmR === 0) leaves.push([...del]);
+        return;
+      }
+      const c = s[i];
+      const blocked = rule && i > 0 && s[i - 1] === c && prevKept;
+      const tryDelete = (l, r) => { del[i] = true; dfs(i + 1, open, l, r, false); del[i] = false; };
+      if (c === "(") {
+        if (rmL > 0 && !blocked) tryDelete(rmL - 1, rmR);
+        dfs(i + 1, open + 1, rmL, rmR, true);
+      } else if (c === ")") {
+        if (rmR > 0 && !blocked) tryDelete(rmL, rmR - 1);
+        if (open > 0) dfs(i + 1, open - 1, rmL, rmR, true);
+      } else {
+        dfs(i + 1, open, rmL, rmR, true);
+      }
+    }
+    dfs(0, 0, open, rmR, false);
+    return { calls, leaves };
+  }
+
+  function show() {
+    const inp = document.getElementById("lf-in");
+    const s = inp.value.replace(/[^()a-z]/g, "").slice(0, 16);
+    const { calls, leaves } = search(s, document.getElementById("lf-rule").checked);
+    const groups = new Map();
+    for (const d of leaves) {
+      const result = [...s].filter((_, k) => !d[k]).join("");
+      if (!groups.has(result)) groups.set(result, []);
+      groups.get(result).push(d);
+    }
+    document.getElementById("lf-stats").textContent =
+      `${calls.toLocaleString()} calls · ${leaves.length} accepted leaves · ${groups.size} distinct answers`;
+    const out = document.getElementById("lf-out");
+    out.innerHTML = "";
+    for (const [result, ds] of groups) {
+      const g = document.createElement("div");
+      g.className = "group";
+      const head = document.createElement("div");
+      head.innerHTML = `<span class="result">"${result}"</span> ` +
+        `<span class="${ds.length > 1 ? "dup" : ""}">×${ds.length}</span>`;
+      g.append(head);
+      for (const d of ds.slice(0, 24)) {
+        const p = document.createElement("span");
+        p.className = "pattern";
+        p.innerHTML = [...s].map((c, k) => d[k] ? `<span class="del">${c}</span>` : c).join("");
+        g.append(p);
+      }
+      out.append(g);
+    }
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("lf-in").addEventListener("input", show);
+    document.getElementById("lf-rule").addEventListener("change", show);
+    show();
+  });
+</script>
+</body>
+</html>

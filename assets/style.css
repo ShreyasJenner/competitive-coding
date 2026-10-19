@@ -182,6 +182,16 @@ nav.course a { margin-right: 1rem; }
 .st-input { font: inherit; font-family: var(--mono); font-size: .85rem; width: 6rem; color: var(--fg);
   background: var(--bg); border: 1px solid var(--rule); border-radius: 3px; padding: .15rem .3rem; }
 
+/* ---- strings with deleted characters (e.g. "(<span class=del>(</span>)") ---- */
+.del { color: var(--accent); text-decoration: line-through; opacity: .7; }
+.leafbox { margin: 1.4rem 0; padding: 1rem; border: 1px solid var(--rule); border-radius: 4px; }
+.leafbox .controls { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; align-items: center; font-size: .85rem; }
+.leafbox .stats { font-size: .85rem; color: var(--muted); margin: .7rem 0 .3rem; }
+.leafbox .group { font-family: var(--mono); font-size: .8rem; margin: .5rem 0; }
+.leafbox .group .result { font-weight: 600; }
+.leafbox .group .dup { color: var(--bad); }
+.leafbox .pattern { display: inline-block; margin: .15rem .9rem .15rem 0; white-space: pre; }
+
 @media print {
   :root { --bg: #fff; --fg: #000; --code-bg: #f4f4f4; }
   body { max-width: none; padding: 0; font-size: 11pt; }
