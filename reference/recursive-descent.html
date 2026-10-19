@@ -44,6 +44,8 @@ returns its value, and leaves <code>i</code> <strong>just after</strong> it.</di
   <tr><td>cursor passed by value</td><td>caller re-reads the child, then runs off the end or loops</td></tr>
   <tr><td>early return once the value is known</td><td>cursor stuck inside the brackets, so the parent misreads the leftovers</td></tr>
   <tr><td>forgetting to step past <code>)</code></td><td>parent sees <code>)</code> and ends its own list too soon</td></tr>
+  <tr><td>leaf consumes the trailing <code>,</code></td><td>contract differs by child type, so the parent skips a character after operator children</td></tr>
+  <tr><td><code>int*</code> cursor with <code>cursor += k</code></td><td>moves the pointer, not the position, so the caller never advances</td></tr>
 </table>
 
 <h2>Cost</h2>
@@ -51,7 +53,26 @@ returns its value, and leaves <code>i</code> <strong>just after</strong> it.</di
 <code>!(&hellip;)</code>-style grammars. For n &le; 2&middot;10<sup>4</sup> that&rsquo;s fine. For much deeper input, switch to
 an explicit stack.</p>
 
-<!-- Template is added after the learner solves 1106 themselves. -->
+<h2>Template (LC 1106)</h2>
+<pre>bool parse(const std::string&amp; s, int&amp; i) {
+    char c = s[i];
+    if (c == 't' || c == 'f') { i++; return c == 't'; }  // leaf: consume itself only
+    i += 2;                                              // skip "op("
+    if (c == '!') { bool v = parse(s, i); i++; return !v; }
+    bool acc = (c == '&');                               // identity: &→true, |→false
+    for (;;) {
+        bool v = parse(s, i);
+        acc = (c == '&') ? (acc &amp;&amp; v) : (acc || v);           // no early return
+        if (s[i++] == ')') return acc;                   // skip ',' or ')'
+    }
+}</pre>
+<ul>
+  <li><strong>Who owns the separator?</strong> The parent. A child stops <em>on</em> the <code>,</code> or
+  <code>)</code> after itself and never consumes it.</li>
+  <li>No depth counter is needed. Each child consumes its own brackets completely.</li>
+  <li>Pass the string as <code>const std::string&amp;</code>. A copy per call costs O(n) every time.</li>
+</ul>
+<p>Compare: <a href="https://walkccc.me/LeetCode/problems/1106/">walkccc 1106</a> uses the same design.</p>
 
 </body>
 </html>

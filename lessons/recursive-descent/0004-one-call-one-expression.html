@@ -54,16 +54,22 @@ node&rsquo;s slice contains exactly its children&rsquo;s slices, plus the punctu
 </figure>
 
 <div class="drill">
-  <p class="q">Predict, using <code>s = "|(&amp;(t,!(f)),f)"</code> (indices 0&ndash;13). Answer the last two from the string
+  <p class="q">Predict, using <code>s = "|(&amp;(t,!(f)),f)"</code>. For the last two, find the whole expression that
+  <em>starts</em> at that index and give the index of the first character <em>after</em> it ends. Work from the string
   alone, without the figure.</p>
+<pre>i:  0 1 2 3 4 5 6 7 8 9 10 11 12 13
+s:  | ( &amp; ( t , ! ( f )  )  ,  f  )</pre>
   <div class="row"><code>children of |</code> <label>count <input data-expect="2"></label></div>
   <div class="row"><code>value of s</code> <label>t / f <input data-expect="t"></label></div>
   <div class="row"><code>expr at s[2]</code> <label>first index after it <input data-expect="11"></label></div>
   <div class="row"><code>expr at s[6]</code> <label>first index after it <input data-expect="10"></label></div>
   <button class="check">Check</button>
-  <p class="explain"><code>!(f)</code> is t, so <code>&amp;(t,t)</code> is t, and <code>|(t,f)</code> is t. The expression at
-  2 is <code>&amp;(t,!(f))</code>, which closes at 10, so whatever reads it should stop at 11, the comma. The expression at
-  6 is <code>!(f)</code>, which closes at 9, so the next index is 10.</p>
+  <p class="explain"><code>!(f)</code> is t, so <code>&amp;(t,t)</code> is t, and <code>|(t,f)</code> is t. For the last
+  two, match brackets: from the operator&rsquo;s <code>(</code>, count +1 for each <code>(</code> and &minus;1 for each
+  <code>)</code>, and the <code>)</code> that brings the count back to 0 closes the expression. <code>s[2]</code> is
+  <code>&amp;</code>, its <code>(</code> is at 3, and the count returns to 0 at 10, so the answer is <strong>11</strong>, the
+  comma. <code>s[6]</code> is <code>!(f)</code>, which closes at 9, so the answer is <strong>10</strong>, the <code>)</code>
+  that closes the <code>&amp;</code>. These are exactly where your cursor must be when <code>parse</code> returns.</p>
 </div>
 
 <!-- ───────────────────────────────────────── -->

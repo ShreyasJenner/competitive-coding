@@ -32,9 +32,27 @@
     });
   }
 
+  // After a wrong check, a "Show answer" button appears that fills in the
+  // expected values and reveals the worked answer, so nobody gets stuck.
   function initDrill(el) {
     const btn = el.querySelector("button.check");
     const inputs = [...el.querySelectorAll("input[data-expect]")];
+    const reveal = document.createElement("button");
+    reveal.className = "check reveal";
+    reveal.textContent = "Show answer";
+    reveal.hidden = true;
+    btn.after(reveal);
+    reveal.addEventListener("click", () => {
+      inputs.forEach((inp) => {
+        if (inp.value.trim() !== inp.dataset.expect) {
+          inp.value = inp.dataset.expect;
+          inp.classList.remove("correct", "wrong");
+          inp.classList.add("revealed");
+        }
+      });
+      el.classList.add("done");
+      reveal.hidden = true;
+    });
     btn.addEventListener("click", () => {
       let allOk = true;
       inputs.forEach((inp) => {
@@ -44,6 +62,7 @@
         if (!ok) allOk = false;
       });
       if (allOk) el.classList.add("done");
+      reveal.hidden = allOk || el.classList.contains("done");
       updateScore();
     });
   }
