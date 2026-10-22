@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Every Cell Is a Node</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/course.js"></script>
+<script src="../../assets/quiz.js"></script>
+<script src="../../assets/grid.js"></script>
+</head>
+<body>
+
+<nav class="course no-print" data-topic="graphs" data-file="0005-every-cell-is-a-node.html">
+  <a href="../index.html">All topics</a>
+  <a href="../../reference/graphs.html">Reference sheet</a>
+</nav>
+
+<h1>Every Cell Is a Node</h1>
+<p class="subtitle">LC 200 Number of Islands: a grid is a graph you never build, and searching it needs one thing
+301 never did</p>
+
+<div class="win">
+  <strong>Your win today:</strong> count the islands in a 300&times;300 grid by visiting each cell once. That&rsquo;s
+  your first graph search, and it&rsquo;s the core of most &ldquo;grid&rdquo; Mediums.
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>0. Warm-up from <a href="../recursive-descent/0004-one-call-one-expression.html">Lesson 4</a></h2>
+
+<p>Answer from memory, without opening your 1106. <code>parse(s, i)</code> reads one expression starting at
+<code>s[i]</code> and leaves <code>i</code> just after it.</p>
+
+<div class="st-tape" aria-label="the string &(t,f) with indices">
+  <span class="st-cell">&amp;<span class="st-idx">0</span></span><span class="st-cell">(<span class="st-idx">1</span></span><span class="st-cell">t<span class="st-idx">2</span></span><span class="st-cell">,<span class="st-idx">3</span></span><span class="st-cell">f<span class="st-idx">4</span></span><span class="st-cell">)<span class="st-idx">5</span></span><span class="st-cell"> <span class="st-idx">6</span></span>
+</div>
+
+<div class="drill">
+  <p class="q">Parsing <code>&amp;(t,f)</code> from <code>i = 0</code>:</p>
+  <div class="row"><label>the call for <code>t</code> returns with <code>i</code> = <input data-expect="3"></label></div>
+  <div class="row"><label>the call for <code>f</code> returns with <code>i</code> = <input data-expect="5"></label></div>
+  <div class="row"><label>the call for <code>&amp;</code> returns with <code>i</code> = <input data-expect="6"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">The leaf <code>t</code> eats only itself and stops <em>on</em> the <code>,</code> at index 3. The
+  <strong>parent</strong> (<code>&amp;</code>) skips the <code>,</code> and later the <code>)</code>. Keep this in mind:
+  today&rsquo;s fill function has the same kind of contract.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>1. The grid is a graph</h2>
+
+<p>A graph is just nodes plus edges between them
+(<a href="https://cses.fi/book/book.pdf#page=119"><em>CPH</em> ch. 11</a>). In LC 200:</p>
+
+<ul>
+  <li><strong>node</strong>: a land cell <code>(r, c)</code></li>
+  <li><strong>edge</strong>: two land cells that touch <em>up, down, left or right</em>. Diagonals don&rsquo;t count.</li>
+  <li><strong>island</strong>: a <em>connected component</em>, meaning every land cell you can reach from a starting cell</li>
+</ul>
+
+<p>As in <a href="../backtracking/0002-dfs-the-tree-you-never-build.html">Lesson 2</a>, you never build the graph.
+You work out a cell&rsquo;s neighbours as you need them:</p>
+
+<pre><code>const int dr[] = {1, -1, 0, 0}, dc[] = {0, 0, 1, -1};   // down, up, right, left
+for (int d = 0; d &lt; 4; d++) { int nr = r + dr[d], nc = c + dc[d]; /* ... */ }</code></pre>
+
+<p>So <em>counting islands</em> means <em>counting connected components</em>. A depth-first search from one node reaches
+exactly its own component (<a href="https://cses.fi/book/book.pdf#page=131"><em>CPH</em> &sect;12.3, &ldquo;Connectivity
+check&rdquo;</a>). The algorithm is a scan and a fill:</p>
+
+<div class="callout"><strong>Scan</strong> every cell. When you find land that isn&rsquo;t marked yet, it&rsquo;s a new
+island: <strong>count it</strong>, then <strong>fill</strong> it by DFS, marking everything the fill reaches. When the
+scan later reaches those cells, it skips them because they&rsquo;re already marked.</div>
+
+<span class="sidenote">USACO calls the fill step <em>flood fill</em>: &ldquo;an algorithm that identifies and labels the
+connected component that a particular cell belongs to&rdquo; (<a href="https://usaco.guide/silver/flood-fill">USACO
+Guide</a>).</span>
+
+<!-- ───────────────────────────────────────── -->
+<h2>2. The one new thing: you can walk in circles</h2>
+
+<p>In 301&rsquo;s tree, every call moved to <code>i + 1</code>, so a call could never lead back to itself. A grid has
+no such direction. <code>(0,0)</code> has <code>(0,1)</code> as a neighbour, and <code>(0,1)</code> has
+<code>(0,0)</code> as a neighbour, so an unguarded DFS goes back and forth forever.</p>
+
+<div class="callout"><strong>The rule:</strong> mark a cell <em>the moment you arrive</em>, before trying any
+neighbour. Every call checks the mark first and returns at once if the cell is already marked. This is how
+<em>CPH</em> writes it (<a href="https://cses.fi/book/book.pdf#page=128">&sect;12.1</a>):
+<code>if (visited[s]) return; visited[s] = true;</code>.</div>
+
+<p>You can mark in either of two ways: keep a separate <code>visited</code> array, or overwrite the land with
+<code>'0'</code> (&ldquo;sink&rdquo; it). Both are fine for LC 200.</p>
+
+<p>Now count by hand. Remember that diagonals don&rsquo;t connect.</p>
+
+<div class="drill">
+  <p class="q">How many islands are there? (Rows are separated by <code>/</code>.)</p>
+  <div class="row"><code>101/010/101</code> <label>islands <input data-expect="5"></label></div>
+  <div class="row"><code>111/101/111</code> <label>islands <input data-expect="1"></label></div>
+  <div class="row"><code>1101/0001/1011</code> <label>islands <input data-expect="3"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">In <code>101/010/101</code> every <code>1</code> touches the others only at corners, so there are 5
+  separate islands. <code>111/101/111</code> is one ring: the fill started at <code>(0,0)</code> goes around both sides
+  and marks every cell, so the scan never counts it again. <code>1101/0001/1011</code> has three: <code>{(0,0),(0,1)}</code>,
+  the right-hand hook <code>{(0,3),(1,3),(2,3),(2,2)}</code>, and the single cell <code>(2,0)</code>.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>3. See it</h2>
+
+<p>Step through the scan and fill. The dashed outline is the scan, the red outline is the running
+<code>fill</code> call, and marked cells show their island number. Then <strong>untick &ldquo;mark a cell on
+arrival&rdquo;</strong> and step again: watch the call stack keep growing.</p>
+
+<div class="gridviz no-print" id="gv"></div>
+
+<p>With marking on, each cell is entered once and checked at most four more times, once from each neighbour. That
+makes it O(<em>mn</em>). It&rsquo;s <em>CPH</em>&rsquo;s O(<em>n</em>+<em>m</em>) for DFS, with
+<em>mn</em> nodes and at most 2<em>mn</em> edges.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>4. Check yourself</h2>
+
+<div class="quiz" data-answer="2">
+  <p class="q">1. When must the fill mark cell <code>(r, c)</code>?</p>
+  <button class="opt">After all four neighbours have returned</button>
+  <button class="opt">Only when the island count increases</button>
+  <button class="opt">Before visiting any of its neighbours</button>
+  <button class="opt">Once the outer scan has finished</button>
+  <p class="explain">If you mark later, a neighbour can call back into <code>(r, c)</code> while it&rsquo;s still unmarked,
+  and the two cells keep calling each other until the stack overflows. You just watched this happen in &sect;3.</p>
+</div>
+
+<div class="quiz" data-answer="1">
+  <p class="q">2. 301&rsquo;s DFS was exponential. What is this one on an <em>m</em>&times;<em>n</em> grid?</p>
+  <button class="opt">O(m²n²): one search per cell</button>
+  <button class="opt">O(mn): every cell marked once</button>
+  <button class="opt">O(4^mn): four branches per call</button>
+  <button class="opt">O(mn·log mn): cells get sorted</button>
+  <p class="explain">301 searched <em>paths</em> (sequences of choices), and there are exponentially many. This search
+  visits <em>nodes</em>, and the mark ensures each node is expanded only once. Marking is what turns &ldquo;every
+  path&rdquo; into &ldquo;every cell once&rdquo;.</p>
+</div>
+
+<div class="quiz" data-answer="0">
+  <p class="q">3. In <code>111/101/111</code>, why is the ring counted once, not twice?</p>
+  <button class="opt">The first fill marks every ring cell</button>
+  <button class="opt">The middle water cell joins both halves</button>
+  <button class="opt">The scan only starts fills on corners</button>
+  <button class="opt">Diagonal moves link the two vertical sides</button>
+  <p class="explain">The count goes up only in the <strong>scan</strong>, and only on <em>unmarked</em> land. The first fill
+  goes all the way round the ring, so by the time the scan gets past <code>(0,0)</code>, every ring cell is marked.</p>
+</div>
+<p class="score"></p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>5. Your turn: <code>usr/src/leetcode/200.cpp</code></h2>
+
+<p>The starter has the signature and a <code>main</code> with both LeetCode examples. <code>./test.sh 200</code> runs
+16 cases: diagonal traps, rings, 300&times;300 limits, a 45,000-cell snake and 3,000 random grids checked against a
+reference. The stub already passes 2 of them by accident.</p>
+
+<ol>
+  <li>Write the fill as a private helper. Its contract: given <code>(r, c)</code>, mark the whole island containing it,
+  if there is one, and return.</li>
+  <li>Write the scan in <code>numIslands</code>, then run <code>./test.sh 200</code>.</li>
+  <li><strong>Predict first:</strong> if you marked a cell <em>after</em> the four recursive calls, what would the test
+  output show? Check your prediction by trying it.</li>
+</ol>
+
+<details><summary>Hint 1</summary>
+<p>The fill does three jobs, in this order: <em>reject</em> (off the grid, water, or already marked), <em>mark</em>,
+<em>recurse</em> into the four neighbours. It returns nothing; marking is its only effect.</p></details>
+<details><summary>Hint 2</summary>
+<p>Check that <code>r</code> and <code>c</code> are on the grid <strong>before</strong> you read
+<code>grid[r][c]</code>. Otherwise ASan reports a <code>heap-buffer-overflow</code>.</p></details>
+<details><summary>Hint 3</summary>
+<p>The counter belongs to the scan only, just as the <code>,</code> belonged only to the parent in 1106. The fill never
+counts anything.</p></details>
+
+<p class="sidenote">To build just this file, use <code>./build.sh leetcode/200.cpp</code>. A bare <code>./build.sh 200</code>
+is ambiguous, because there&rsquo;s also an old <code>200.c</code> (an early 209).</p>
+
+<hr>
+
+<h3>Primary source</h3>
+<p><a href="https://usaco.guide/silver/flood-fill">USACO Guide: Flood Fill</a> is short, with an example and a graded
+problem list. Note its warning that recursive flood fill can overflow the stack on large grids; LC 200&rsquo;s 300&times;300
+is fine. For the theory, read <a href="https://cses.fi/book/book.pdf#page=127"><em>CPH</em> ch. 12</a> (pp. 117&ndash;).
+Once you&rsquo;re green, compare with <a href="https://walkccc.me/LeetCode/problems/200/">walkccc 200</a>, which shows
+both DFS and BFS.</p>
+
+<p><strong>Next, solved cold:</strong> <a href="https://leetcode.com/problems/max-area-of-island/">LC 695 Max Area of
+Island</a>. It has the same scan, but the fill <em>returns</em> the island&rsquo;s size, which changes the contract.</p>
+
+<p class="callout">Stuck, or something feels hand-wavy? <strong>Ask me.</strong> Paste your code or the
+<code>./test.sh 200</code> output and I&rsquo;ll point at the line without rewriting it.</p>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    Grid.mount(document.getElementById("gv"), {
+      rows: ["11000", "11000", "00100", "00011"],
+      markToggle: true,
+      maxSteps: 120,
+    });
+  });
+</script>
+</body>
+</html>

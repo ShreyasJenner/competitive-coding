@@ -211,6 +211,37 @@ nav.course .course-step .next { margin-left: auto; margin-right: 0; }
 .leafbox .group .dup { color: var(--bad); }
 .leafbox .pattern { display: inline-block; margin: .15rem .9rem .15rem 0; white-space: pre; }
 
+/* ---- grid.js ---- */
+:root {
+  --water: #e4ecef; --land: #b9ad8e;
+  --isl1: #e8b4a0; --isl2: #a9c9a4; --isl3: #a7bfdc; --isl4: #e0cf8f; --isl5: #c8b0d8; --isl6: #9fd1cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --water: #1f2a2e; --land: #6b6250;
+    --isl1: #8a4a36; --isl2: #3f6b3a; --isl3: #3b5a80; --isl4: #7a6a2a; --isl5: #5e4777; --isl6: #2f6f69;
+  }
+}
+.gridviz { margin: 1.4rem 0; padding: 1rem; border: 1px solid var(--rule); border-radius: 4px; outline: none; }
+.gridviz:focus-visible { border-color: var(--accent); }
+.gr-board { display: grid; gap: 3px; margin: 0 0 .8rem; }
+.gr-cell {
+  aspect-ratio: 1; min-width: 0; padding: 0; border: 2px solid transparent; border-radius: 3px; cursor: pointer;
+  font: inherit; font-family: var(--mono); font-size: .75rem; color: var(--fg);
+}
+.gr-water { background: var(--water); }
+.gr-land { background: var(--land); }
+.gr-seen.gr-isl1 { background: var(--isl1); } .gr-seen.gr-isl2 { background: var(--isl2); }
+.gr-seen.gr-isl3 { background: var(--isl3); } .gr-seen.gr-isl4 { background: var(--isl4); }
+.gr-seen.gr-isl5 { background: var(--isl5); } .gr-seen.gr-isl6 { background: var(--isl6); }
+.gr-onstack { border-color: var(--muted); }
+.gr-scan { border-style: dashed; border-color: var(--fg); }
+.gr-cur { border-color: var(--accent); border-style: solid; box-shadow: 0 0 0 2px var(--accent); }
+.gr-stats { font-size: .85rem; margin: .2rem 0; }
+.gr-stack { font-family: var(--mono); font-size: .72rem; color: var(--muted); margin: .2rem 0; overflow-wrap: anywhere; }
+.gr-toggle { font-size: .85rem; margin-left: .4rem; }
+.gr-hint { font-size: .75rem; color: var(--muted); margin: .5rem 0 0; }
+
 @media print {
   :root { --bg: #fff; --fg: #000; --code-bg: #f4f4f4; }
   body { max-width: none; padding: 0; font-size: 11pt; }

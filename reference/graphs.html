@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graphs Reference</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="course no-print"><a href="../lessons/index.html">All topics &amp; lessons</a></nav>
+
+<h1>Graphs</h1>
+<p class="subtitle">Quick reference &middot; C++ &middot; sources:
+<a href="https://cses.fi/book/book.pdf#page=127"><em>CPH</em> ch. 12</a>,
+<a href="https://usaco.guide/silver/flood-fill">USACO Guide: Flood Fill</a></p>
+
+<h2>Spot it</h2>
+<ul>
+  <li>A <strong>grid</strong> where cells &ldquo;touch&rdquo; or &ldquo;spread&rdquo; to their neighbours</li>
+  <li>The question asks <strong>how many groups</strong>, <strong>how big</strong>, or <strong>can A reach B</strong></li>
+  <li>Words like <em>connected</em>, <em>adjacent</em>, <em>region</em>, <em>island</em>, <em>component</em></li>
+  <li>Examples: <a href="https://leetcode.com/problems/number-of-islands/">200</a>,
+  <a href="https://leetcode.com/problems/max-area-of-island/">695</a>,
+  <a href="https://leetcode.com/problems/flood-fill/">733</a>,
+  <a href="https://leetcode.com/problems/surrounded-regions/">130</a></li>
+</ul>
+
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Meaning here</th></tr>
+  <tr><td>node</td><td>one cell <code>(r, c)</code>, or one vertex of a general graph</td></tr>
+  <tr><td>edge</td><td>two nodes that are directly connected; in a grid, land cells sharing a side (not a corner)</td></tr>
+  <tr><td>connected component</td><td>every node reachable from a start node; an &ldquo;island&rdquo;</td></tr>
+  <tr><td>scan</td><td>the outer loop over every cell; the only place that counts</td></tr>
+  <tr><td>fill (flood fill)</td><td>a DFS from one cell that marks its whole component</td></tr>
+  <tr><td>mark / visited</td><td>a flag set <em>on arrival</em> so that a node is expanded once</td></tr>
+</table>
+
+<h2>The rule</h2>
+<div class="callout">Mark a node <strong>the moment you arrive</strong>, before touching any neighbour. Every call checks the mark
+first. <code>if (visited[s]) return; visited[s] = true;</code> (<a href="https://cses.fi/book/book.pdf#page=128"><em>CPH</em>
+&sect;12.1</a>)</div>
+<ul>
+  <li>Trees (301, 1106) can&rsquo;t revisit a node. Grids and graphs can, because they have cycles.</li>
+  <li>Mark with a separate <code>visited</code> array, or by overwriting the input (<code>'1'</code> &rarr; <code>'0'</code>).</li>
+</ul>
+
+<h2>Grid as graph</h2>
+<pre>const int dr[] = {1, -1, 0, 0}, dc[] = {0, 0, 1, -1};   // 4 directions
+for (int d = 0; d &lt; 4; d++) {
+    int nr = r + dr[d], nc = c + dc[d];
+    if (nr &lt; 0 || nc &lt; 0 || nr &gt;= m || nc &gt;= n) continue;  // bounds BEFORE reading grid
+    // ...
+}</pre>
+<p>Scan + fill: for each cell, if it&rsquo;s unmarked land, <code>count++</code> and fill from it.
+(<a href="../lessons/graphs/0005-every-cell-is-a-node.html">Lesson 5</a>)</p>
+
+<h2>Pitfalls</h2>
+<table>
+  <tr><th>Bug</th><th>Symptom</th></tr>
+  <tr><td>mark after recursing (or never)</td><td>two neighbours call each other forever; ASan <code>stack-overflow</code></td></tr>
+  <tr><td>reading <code>grid[r][c]</code> before the bounds check</td><td>ASan <code>heap-buffer-overflow</code> at the edges</td></tr>
+  <tr><td>8 directions instead of 4</td><td>diagonal neighbours merge; <code>10/01</code> gives 1, not 2</td></tr>
+  <tr><td>counting inside the fill</td><td>counts cells, not islands</td></tr>
+  <tr><td>passing <code>visited</code> or the grid by value</td><td>a full copy on every call, so O((mn)<sup>2</sup>) time and memory</td></tr>
+</table>
+
+<h2>Cost</h2>
+<p>Time O(<em>mn</em>): each cell is expanded once and checked at most four more times. This is DFS&rsquo;s O(<em>n</em>+<em>m</em>)
+with <em>mn</em> nodes. The recursion depth can reach the island&rsquo;s size (about 45,000 for a 300&times;300 snake), which is fine
+for LC 200. For much larger grids, use an explicit stack or BFS
+(<a href="https://usaco.guide/silver/flood-fill">USACO</a> warns about this).</p>
+
+<h2>Template (LC 200)</h2>
+<pre>void fill(std::vector&lt;std::vector&lt;char&gt;&gt;&amp; g, int r, int c) {
+    if (r &lt; 0 || c &lt; 0 || r &gt;= (int)g.size() || c &gt;= (int)g[0].size()) return;  // off the grid
+    if (g[r][c] != '1') return;                    // water, or already marked
+    g[r][c] = '0';                                 // mark ON ARRIVAL
+    for (int d = 0; d &lt; 4; d++) fill(g, r + dr[d], c + dc[d]);
+}
+
+int numIslands(std::vector&lt;std::vector&lt;char&gt;&gt;&amp; g) {
+    int count = 0;
+    for (int r = 0; r &lt; (int)g.size(); r++)
+        for (int c = 0; c &lt; (int)g[0].size(); c++)
+            if (g[r][c] == '1') { count++; fill(g, r, c); }  // only the scan counts
+    return count;
+}</pre>
+<ul>
+  <li><strong>Guard placement:</strong> either reject at the top of <code>fill</code> (above), or check bounds before each
+  call. Both are correct; the guard-at-top style pairs with a direction loop.</li>
+  <li>Sinking to <code>'0'</code> merges &ldquo;water&rdquo; and &ldquo;already seen&rdquo; into one check.</li>
+  <li>Returning a value instead (e.g. island size for 695): <code>return 1 + sum of the four calls</code>, and 0 when rejected.</li>
+</ul>
+<p>Compare: <a href="https://walkccc.me/LeetCode/problems/200/">walkccc 200</a> shows both DFS and BFS (BFS space
+O(min(m, n))).</p>
+
+</body>
+</html>

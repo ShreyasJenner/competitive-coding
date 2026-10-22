@@ -25,6 +25,14 @@
         { file: "0004-one-call-one-expression.html", n: 4, title: "One Call, One Expression", problem: "LC 1106" },
       ],
     },
+    {
+      id: "graphs",
+      title: "Graphs",
+      reference: "graphs.html",
+      lessons: [
+        { file: "0005-every-cell-is-a-node.html", n: 5, title: "Every Cell Is a Node", problem: "LC 200" },
+      ],
+    },
   ];
 
   function a(href, text, cls) {
