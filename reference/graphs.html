@@ -97,5 +97,33 @@ int numIslands(std::vector&lt;std::vector&lt;char&gt;&gt;&amp; g) {
 <p>Compare: <a href="https://walkccc.me/LeetCode/problems/200/">walkccc 200</a> shows both DFS and BFS (BFS space
 O(min(m, n))).</p>
 
+<h2>Template (LC 695): the fill returns a value</h2>
+<pre>int area(std::vector&lt;std::vector&lt;int&gt;&gt;&amp; g, int r, int c) {
+    if (r &lt; 0 || c &lt; 0 || r &gt;= (int)g.size() || c &gt;= (int)g[0].size()) return 0;
+    if (g[r][c] != 1) return 0;                    // water or seen: adds nothing
+    g[r][c] = 0;                                   // mark ON ARRIVAL
+    int size = 1;                                  // me
+    for (int d = 0; d &lt; 4; d++) size += area(g, r + dr[d], c + dc[d]);  // + my children
+    return size;
+}
+
+int maxAreaOfIsland(std::vector&lt;std::vector&lt;int&gt;&gt;&amp; g) {
+    int best = 0;
+    for (int r = 0; r &lt; (int)g.size(); r++)
+        for (int c = 0; c &lt; (int)g[0].size(); c++)
+            best = std::max(best, area(g, r, c));     // the max lives in the scan only
+    return best;
+}</pre>
+<table>
+  <tr><th>Contract</th><th>Call returns</th><th>Combine</th></tr>
+  <tr><td><strong>return own answer</strong> (preferred)</td><td>size of what <em>this</em> call reached</td><td><code>1 + sum(children)</code></td></tr>
+  <tr><td>thread an accumulator</td><td><code>f</code> passed in + what this call reached</td><td>pass the running total to each child in turn</td></tr>
+</table>
+<ul>
+  <li>Both are correct. &ldquo;Return own answer&rdquo; is the shape that tree recursion (LC 236) and DP (LC 198) are built on.</li>
+  <li>With an accumulator, the result never goes down, so <code>max(tmp, f)</code> inside the fill is always just <code>tmp</code>.</li>
+</ul>
+<p>Compare: <a href="https://walkccc.me/LeetCode/problems/695/">walkccc 695</a>.</p>
+
 </body>
 </html>

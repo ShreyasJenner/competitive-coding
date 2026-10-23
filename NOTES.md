@@ -1,6 +1,17 @@
 # Teaching notes
 
-## ▶ RESUME HERE (as of end of session 2026-10-21)
+## ▶ RESUME HERE (end of session 2026-10-22)
+
+**Open the next session with:** (1) a spaced check from memory: "In 695, what does the fill return, and where does the `max` live?" (Want: 0 for water/seen, otherwise `1 + sum of the 4 neighbours`; the max is only in the scan.) (2) Offer the next problem via AskUserQuestion. Recommend **LC 236 LCA** (a lesson; tests "return your own answer" unprompted); alternatives are LC 198 (first DP) and LC 994 (grid BFS).
+
+### Session log 2026-10-22
+
+- Spaced checks passed. Grid DFS: at first they said only "check visited at the top". When I showed them a fill that checks at the top but marks after recursing, they placed the mark correctly and explained the A↔B loop. 1106: 3/5/6 correct, and record 0005 is updated (ownership is settled).
+- **LC 695 SOLVED cold, 16/16** (record 0007). It uses an accumulator-threading contract with redundant `max`es, which the learner confirmed after one question. The template and a "two contracts" table are now in `reference/graphs.html`. The rewrite to `1 + sum(children)` is DONE (16/16). Next: the next problem. **Recommend LC 236 LCA or LC 198 House Robber**, since both rely on "return your own answer". Next session's spaced check: "what does a fill return in 695, and where does the max live?"
+- (Original issue note) **LC 695 Max Area of Island issued cold** (learner's choice). `usr/test/leetcode/695.cpp` has 16 cases with a union-find reference and stress test, and it was verified with a scratchpad DFS. The starter `usr/src/leetcode/695.cpp` returns 0 (3/16 pass). There is no lesson. If they get stuck, give hints only: "what should a fill *return*?", then "1 + the sum of the neighbours". When solved, write record 0007 and add the 695 template to `reference/graphs.html`.
+- Watch for: counting area in the scan rather than in the fill, and a `max` taken over the wrong thing.
+
+## Previous resume (end of session 2026-10-21)
 
 **Where things stand.** LC 200 Number of Islands is **solved** (record 0006): 16/16 under ASan, unaided, no hints, with Lesson 5 as its lesson. This was the first problem after the switch to Mediums (see Pacing below). Lessons 1–5 exist, and the latest is `lessons/graphs/0005-every-cell-is-a-node.html`. `reference/graphs.html` now has the verified LC 200 template.
 

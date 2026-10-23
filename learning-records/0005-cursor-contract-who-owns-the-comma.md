@@ -16,3 +16,5 @@ All four were pointed out by line, with no code given, and the learner rewrote t
 - When teaching a new recursive shape, ask "which call owns this character?" explicitly. Ownership of the separator, not the recursion itself, was where they slipped.
 - Small leftovers: `!` still uses a loop, `== true ? false : true` stands in for `!`, and the `|`/`&` branches are duplicated. These are cleanups, not misunderstandings.
 - Next options: the explicit-stack rewrite (bridge to 301's BFS), or LC 394 solved cold.
+
+**Update 2026-10-22 (spaced check, 3 days later)**: traced `&(t,f)` cold with no notes. Got t→3, f→5, &→6. The leaf stops right after itself, and the parent steps over `,`/`)`. Their ambiguous 2026-10-21 wording was a phrasing slip, not the old misconception. Ownership is settled, so no re-drill is needed.
