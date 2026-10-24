@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trees Reference</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="course no-print"><a href="../lessons/index.html">All topics &amp; lessons</a></nav>
+
+<h1>Trees</h1>
+<p class="subtitle">Quick reference &middot; C++ &middot; sources:
+<a href="https://cses.fi/book/book.pdf#page=143"><em>CPH</em> ch. 14</a>,
+<a href="https://cses.fi/book/book.pdf#page=177"><em>CPH</em> &sect;18 (LCA)</a></p>
+
+<h2>Spot it</h2>
+<ul>
+  <li>The input is a <code>TreeNode*</code> root, or a graph with <em>n</em> nodes and <em>n</em>&minus;1 edges</li>
+  <li>The answer for a node depends on the answers for its <strong>subtrees</strong>: size, height, sums, &ldquo;does it
+  contain X&rdquo;, &ldquo;where do two paths meet&rdquo;</li>
+  <li>Examples: <a href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/">236</a>,
+  <a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/">104</a>,
+  <a href="https://leetcode.com/problems/diameter-of-binary-tree/">543</a>,
+  <a href="https://leetcode.com/problems/binary-tree-maximum-path-sum/">124</a></li>
+</ul>
+
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Meaning here</th></tr>
+  <tr><td>subtree of t</td><td><code>t</code> plus everything below it</td></tr>
+  <tr><td>descendant</td><td>a node in the subtree; on LeetCode a node is its own descendant</td></tr>
+  <tr><td>LCA</td><td>&ldquo;the lowest node whose subtree contains both the nodes&rdquo; (<em>CPH</em> p.&nbsp;167)</td></tr>
+  <tr><td>contract</td><td>what one call promises to return about <em>its own</em> subtree</td></tr>
+  <tr><td>post-order</td><td>left subtree, right subtree, then the node itself, so the node decides after its children report</td></tr>
+  <tr><td>height <em>h</em></td><td>the longest root-to-leaf path; the recursion depth is about <em>h</em> (log <em>n</em> to <em>n</em>)</td></tr>
+</table>
+
+<h2>The shape</h2>
+<div class="callout">Each call answers for its <strong>own subtree</strong> and returns that answer. The parent
+<strong>combines</strong> its children&rsquo;s answers. It doesn&rsquo;t look past them.
+(<a href="../lessons/trees/0006-ask-your-children.html">Lesson 6</a>)</div>
+<pre>R f(TreeNode* t) {
+    if (!t) return /* answer for an empty tree */;
+    R a = f(t-&gt;left), b = f(t-&gt;right);
+    return /* combine t, a, b */;
+}</pre>
+<table>
+  <tr><th>Problem</th><th>f(t) returns</th><th>Combine</th></tr>
+  <tr><td>size (<em>CPH</em> &sect;14.1)</td><td>number of nodes</td><td><code>1 + a + b</code></td></tr>
+  <tr><td>height (104)</td><td>longest downward path</td><td><code>1 + max(a, b)</code></td></tr>
+  <tr><td>LCA (236)</td><td>null / the one target found / the LCA</td><td>both non-null &rarr; <code>t</code>; else whichever is non-null</td></tr>
+</table>
+<ul>
+  <li>A tree has no cycles, so there is no <code>visited</code> mark (compare <a href="graphs.html">Graphs</a>).</li>
+  <li>The same contract appears in 695&rsquo;s fill (<code>1 + sum of neighbours</code>) and in DP.</li>
+</ul>
+
+<h2>Pitfalls</h2>
+<table>
+  <tr><th>Bug</th><th>Symptom</th></tr>
+  <tr><td>returning a <code>bool</code> &ldquo;found it&rdquo;</td><td>the root learns <em>that</em> the answer is below it, but not <em>which</em> node</td></tr>
+  <tr><td>returning <code>f(left)</code> early and skipping the right</td><td>targets on opposite sides give the left one, not their LCA</td></tr>
+  <tr><td>comparing <code>val</code> instead of pointers</td><td>happens to pass with unique values, but it&rsquo;s the wrong habit</td></tr>
+  <tr><td>very deep tree under ASan</td><td><code>stack-overflow</code> near depth 10<sup>5</sup>; ASan frames are larger than normal ones</td></tr>
+</table>
+
+<h2>Template (LC 236)</h2>
+<pre>// Contract: f(t) returns nullptr if t's subtree holds neither p nor q,
+// the one it holds if only one, and their LCA if both (which may be deep below t).
+TreeNode* lowestCommonAncestor(TreeNode* t, TreeNode* p, TreeNode* q) {
+    if (!t || t == p || t == q) return t;          // empty, or landed on a target
+    TreeNode* a = lowestCommonAncestor(t-&gt;left, p, q);
+    TreeNode* b = lowestCommonAncestor(t-&gt;right, p, q);
+    if (a &amp;&amp; b) return t;                          // one on each side: t is where they meet
+    return a ? a : b;                              // pass up whatever was found (or null)
+}</pre>
+<p>Verified 18/18 (<code>./test.sh 236</code>). Time O(<em>n</em>), stack O(<em>h</em>). Compare:
+<a href="https://walkccc.me/LeetCode/problems/236/">walkccc 236</a>.</p>
+<table>
+  <tr><th>Approach</th><th>Cost</th><th>Note</th></tr>
+  <tr><td>contract, one pass (above)</td><td>O(<em>n</em>)</td><td>the general tree shape</td></tr>
+  <tr><td>root&rarr;p and root&rarr;q paths, last common node</td><td>O(<em>n</em>) if the path is shared (push, recurse, pop)</td><td>passing the path <strong>by value</strong> makes it O(<em>n&middot;h</em>) and overflows the stack on a vine</td></tr>
+</table>
+
+</body>
+</html>

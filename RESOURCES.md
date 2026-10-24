@@ -15,6 +15,8 @@
   Short module with an example and a graded problem list. Defines flood fill as labelling "the connected component that a particular cell belongs to". Warns that the recursive version can overflow the stack. Use for: grid DFS/BFS (200, 695, 733, 130).
 - CPH graph chapters (same PDF as above): ch. 11 Basics of graphs (printed p. 109, PDF p. 119); ch. 12 Graph traversal (printed p. 117, PDF p. 127), with DFS code on PDF p. 128 and "Connectivity check" on PDF p. 131. In-book links use `book.pdf#page=N` with the PDF page.
 
+- CPH tree chapters (same PDF): ch. 14 Tree algorithms (printed p. 133, PDF p. 143). Subtree DP `count[s]` is on PDF p. 145, binary-tree pre/in/post-order on PDF p. 149, and ch. 18's LCA definition ("the lowest node whose subtree contains both the nodes") on PDF p. 177. Use for: tree recursion that returns values (236, 104, 543, 124). Ch. 18's binary-lifting/Euler-tour methods are for many queries, which LeetCode rarely needs.
+
 - [_Crafting Interpreters_ by Robert Nystrom, ch. 6 "Parsing Expressions" (free online)](https://craftinginterpreters.com/parsing-expressions.html)
   The clearest free explanation of recursive descent: each grammar rule becomes a function, and a `current` cursor marks the next token. Use for: parsing/expression problems (1106, 394, 224, 726). §6.2 is the core; §6.3 covers error handling, which LeetCode rarely needs.
 

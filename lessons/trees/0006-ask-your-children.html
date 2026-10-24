@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask Your Children</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/course.js"></script>
+<script src="../../assets/quiz.js"></script>
+<script src="../../assets/tree.js"></script>
+</head>
+<body>
+
+<nav class="course no-print" data-topic="trees" data-file="0006-ask-your-children.html">
+  <a href="../index.html">All topics</a>
+  <a href="../../reference/trees.html">Reference sheet</a>
+</nav>
+
+<h1>Ask Your Children</h1>
+<p class="subtitle">LC 236 Lowest Common Ancestor: each call reports what its subtree contains, and the parent makes
+the decision</p>
+
+<div class="win">
+  <strong>Your win today:</strong> find the lowest common ancestor in a tree of 10<sup>5</sup> nodes in one pass, using
+  a function whose return value <em>means</em> something you chose. Most tree Mediums come down to the same
+  question: &ldquo;what should a call hand back?&rdquo;
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>0. Warm-up from <a href="../graphs/0005-every-cell-is-a-node.html">695</a></h2>
+
+<p>Your 695 fill returned <code>1 + the sum of its neighbours&rsquo; returns</code>. Use the same idea on a tree: let
+<code>size(t)</code> be 0 for an empty child, and otherwise <code>1 + size(left) + size(right)</code>. <em>CPH</em>
+computes <code>count[s]</code> exactly this way (<a href="https://cses.fi/book/book.pdf#page=145">&sect;14.1, PDF
+p.&nbsp;145</a>). Answer from the picture:</p>
+
+<figure class="treeviz" id="warm"><figcaption>The tree from LeetCode&rsquo;s examples:
+<code>[3,5,1,6,2,0,8,null,null,7,4]</code></figcaption></figure>
+
+<div class="drill">
+  <p class="q">What does each call return?</p>
+  <div class="row"><label><code>size(2)</code> = <input data-expect="3"></label></div>
+  <div class="row"><label><code>size(5)</code> = <input data-expect="5"></label></div>
+  <div class="row"><label><code>size(3)</code> = <input data-expect="9"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">2 has the leaves 7 and 4 under it: 1 + 1 + 1 = 3. Node 5 is 1 + size(6) + size(2) = 1 + 1 + 3 = 5. The root
+  adds node 1&rsquo;s three: 1 + 5 + 3 = 9. No call looks past its own children. Each one trusts what they report,
+  just as each 695 fill trusted its neighbours.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>1. What &ldquo;lowest common ancestor&rdquo; means</h2>
+
+<div class="callout">&ldquo;The lowest common ancestor of two nodes of a rooted tree is the lowest node whose subtree
+contains both the nodes.&rdquo; (<a href="https://cses.fi/book/book.pdf#page=177"><em>CPH</em> ch.&nbsp;18, PDF
+p.&nbsp;177</a>)</div>
+
+<p>LeetCode adds one rule: a node counts as its own descendant. So if <code>q</code> is below <code>p</code>, the answer
+is <code>p</code>. Use the tree above:</p>
+
+<div class="drill">
+  <p class="q">LCA of each pair:</p>
+  <div class="row"><code>p=5, q=1</code> <label>LCA <input data-expect="3"></label></div>
+  <div class="row"><code>p=7, q=4</code> <label>LCA <input data-expect="2"></label></div>
+  <div class="row"><code>p=5, q=4</code> <label>LCA <input data-expect="5"></label></div>
+  <div class="row"><code>p=7, q=8</code> <label>LCA <input data-expect="3"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">5 and 1 are on opposite sides of 3. 7 and 4 are siblings under 2. 4 is inside 5&rsquo;s subtree, and
+  5 counts as its own descendant, so the answer is 5. 7 is deep on the left and 8 is on the right, so they meet only at
+  the root.</p>
+</div>
+
+<p>The brute force asks every node &ldquo;are both <code>p</code> and <code>q</code> in your subtree?&rdquo; and keeps the
+deepest node that says yes. Each question is its own search, so the cost is O(<em>n</em>&sup2;) on a long thin tree,
+which is too slow at 10<sup>5</sup>. The redundant work is that a node&rsquo;s search repeats its children&rsquo;s
+searches. So let the children report instead.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>2. Design the contract</h2>
+
+<p>You&rsquo;ll write <code>f(t)</code>, which looks at <code>t</code>&rsquo;s subtree once and returns something to its
+parent. <strong>Before you open the box below</strong>, decide what that something is. Write it down in one sentence.</p>
+
+<p>A <code>bool</code> (&ldquo;I found p or q&rdquo;) is a natural first try. It doesn&rsquo;t work: when the root hears
+<em>true</em> from both sides, it knows the answer is the root. But when it hears <em>true</em> from one side only, it
+knows the answer is <em>somewhere down there</em>, and not which node. The return value has to carry a node.</p>
+
+<details><summary>The contract (open once you&rsquo;ve written yours)</summary>
+<p><code>f(t)</code> returns a <code>TreeNode*</code>:</p>
+<table>
+  <tr><th>What <code>t</code>&rsquo;s subtree contains</th><th><code>f(t)</code> returns</th></tr>
+  <tr><td>neither p nor q</td><td><code>nullptr</code></td></tr>
+  <tr><td>exactly one of them</td><td>that node</td></tr>
+  <tr><td>both</td><td>their LCA</td></tr>
+</table>
+<p>The meaning changes from row to row, and that is fine. The parent only needs to tell &ldquo;nothing&rdquo; from
+&ldquo;something&rdquo;, then decide. If the root&rsquo;s whole tree holds both nodes, its row is the last one, so
+<code>f(root)</code> <em>is</em> the answer.</p>
+</details>
+
+<!-- ───────────────────────────────────────── -->
+<h2>3. Check yourself: the parent&rsquo;s decision</h2>
+
+<p>These follow from the contract alone. In each one, <code>t</code> is neither <code>p</code> nor <code>q</code>.</p>
+
+<div class="quiz" data-answer="2">
+  <p class="q">1. <code>f(t-&gt;left)</code> returned 7 and <code>f(t-&gt;right)</code> returned 4. What does
+  <code>f(t)</code> return?</p>
+  <button class="opt">Node 7, from the left</button>
+  <button class="opt">Node 4, from the right</button>
+  <button class="opt">Node t, the meeting point</button>
+  <button class="opt">Null, since t is neither</button>
+  <p class="explain">Each side holds one target, so they are on opposite sides of <code>t</code>, and <code>t</code> is the
+  lowest node that contains both. Besides landing on p or q itself (quiz 3), this is the only place an LCA is
+  <em>created</em>. Everywhere else, a node is passed up.</p>
+</div>
+
+<div class="quiz" data-answer="0">
+  <p class="q">2. <code>f(t-&gt;left)</code> returned null and <code>f(t-&gt;right)</code> returned 8. What does
+  <code>f(t)</code> return?</p>
+  <button class="opt">Node 8, passed up unchanged</button>
+  <button class="opt">Node t, as the LCA</button>
+  <button class="opt">Null, since left found nothing</button>
+  <button class="opt">The right child of t</button>
+  <p class="explain"><code>t</code>&rsquo;s subtree holds whatever the right side found, and nothing else. That is either
+  one target or an LCA found further down. Either way, the contract says hand it up as it is.</p>
+</div>
+
+<div class="quiz" data-answer="3">
+  <p class="q">3. When a call lands <em>on</em> <code>p</code>, it can return <code>p</code> at once, without searching
+  below. Why is that still correct if <code>q</code> is below <code>p</code>?</p>
+  <button class="opt">The tests never put q below p</button>
+  <button class="opt">The right subtree search finds q anyway</button>
+  <button class="opt">Searching below p would revisit marked nodes</button>
+  <button class="opt">Then p itself is the right answer</button>
+  <p class="explain">If <code>q</code> is below <code>p</code>, the LCA <em>is</em> <code>p</code> (row 3 of the
+  contract). If it isn&rsquo;t, searching below <code>p</code> is wasted work, because some ancestor will get
+  <code>p</code> from one side and <code>q</code> from the other. Either way, &ldquo;return <code>p</code>&rdquo; is
+  correct.</p>
+</div>
+
+<div class="quiz" data-answer="1">
+  <p class="q">4. On a tree with <em>n</em> nodes and height <em>h</em>, what does <code>f(root)</code> cost?</p>
+  <button class="opt">O(n²) time, O(n) stack</button>
+  <button class="opt">O(n) time, O(h) stack</button>
+  <button class="opt">O(n log n) time, O(1) stack</button>
+  <button class="opt">O(h) time, O(h) stack</button>
+  <p class="explain">Each node gets one call that does O(1) work besides its two child calls, so the brute force&rsquo;s
+  repeated searches are gone. The stack holds one frame per level, so <em>h</em> is about log <em>n</em> when the tree is
+  balanced and <em>n</em> when it is a long vine. Unlike a grid, a tree has no cycles, so nothing needs marking
+  (<a href="https://cses.fi/book/book.pdf#page=144"><em>CPH</em> &sect;14.1</a>).</p>
+</div>
+<p class="score"></p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>4. See it</h2>
+
+<p>Step through it. The blue nodes are <code>p</code> and <code>q</code>, the red ring is the running call, and the
+red label under a node is what its call handed back. Try <code>p=5, q=4</code>: watch the search stop at 5 without
+going down to 4. Then try two leaves on opposite sides, such as <code>7</code> and <code>8</code>.</p>
+
+<div class="treeviz no-print" id="tv"></div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>5. Your turn: <code>usr/src/leetcode/236.cpp</code></h2>
+
+<p>The starter has LeetCode&rsquo;s <code>TreeNode</code> and a <code>main</code> that runs three examples.
+<code>./test.sh 236</code> runs 18 cases: both orders of p and q, a target at the root, negative values, a
+65,535-node complete tree, a 30,000-node vine, and 3,000 random trees checked against a non-recursive reference.
+The stub just returns <code>root</code>, so it already passes 8 of them by accident.</p>
+
+<ol>
+  <li>Write your contract as a comment above the function, in your own words.</li>
+  <li>Implement it, then run <code>./test.sh 236</code>.</li>
+  <li><strong>Predict first:</strong> suppose you return <code>f(left)</code> as soon as it is non-null, and only search
+  the right when the left found nothing. Which kind of case fails? Try it and compare.</li>
+</ol>
+
+<details><summary>Hint 1</summary>
+<p>You may not need a helper. <code>lowestCommonAncestor</code> already takes a subtree&rsquo;s root and returns a
+<code>TreeNode*</code>. Does it satisfy the contract if you call it on <code>root-&gt;left</code>?</p></details>
+<details><summary>Hint 2</summary>
+<p>There are two base cases, both before any recursion: an empty subtree, and landing on <code>p</code> or
+<code>q</code> (quiz 3).</p></details>
+<details><summary>Hint 3</summary>
+<p>After both child calls there are three cases: both sides non-null, one side non-null, or neither. Quizzes 1 and 2 are
+two of them.</p></details>
+
+<p class="sidenote">Compare pointers (<code>root == p</code>), not values. The values happen to be unique, but the
+answer has to be a node of <em>this</em> tree, and the tests check that by pointer.</p>
+
+<hr>
+
+<h3>Primary source</h3>
+<p><a href="https://cses.fi/book/book.pdf#page=143"><em>CPH</em> ch.&nbsp;14 &ldquo;Tree algorithms&rdquo;</a>
+(printed pp.&nbsp;133&ndash;140). Read &sect;14.1 on traversal and dynamic programming on trees, which is today&rsquo;s
+idea in general form, and the binary-tree orders on <a href="https://cses.fi/book/book.pdf#page=149">PDF
+p.&nbsp;149</a>. The function you&rsquo;re writing is <em>post-order</em>: it decides after both children
+report. Once you&rsquo;re green, compare with <a href="https://walkccc.me/LeetCode/problems/236/">walkccc 236</a>. For
+many LCA queries on one tree, ch.&nbsp;18 (PDF p.&nbsp;177) has faster methods, which LeetCode doesn&rsquo;t need.</p>
+
+<p><strong>Next:</strong> <a href="https://leetcode.com/problems/house-robber/">LC 198 House Robber</a>, your first DP. It
+uses the same &ldquo;return your own answer&rdquo; contract, but the calls overlap, so you&rsquo;ll learn to stop
+repeating them.</p>
+
+<p class="callout">Stuck, or something feels hand-wavy? <strong>Ask me.</strong> Paste your code or the
+<code>./test.sh 236</code> output and I&rsquo;ll point at the line without rewriting it.</p>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const ex = [3, 5, 1, 6, 2, 0, 8, null, null, 7, 4];
+    Tree.draw(document.getElementById("warm"), ex);
+    Tree.mount(document.getElementById("tv"), { values: ex, p: 5, q: 1 });
+  });
+</script>
+</body>
+</html>

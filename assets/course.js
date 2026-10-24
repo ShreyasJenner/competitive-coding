@@ -33,6 +33,14 @@
         { file: "0005-every-cell-is-a-node.html", n: 5, title: "Every Cell Is a Node", problem: "LC 200" },
       ],
     },
+    {
+      id: "trees",
+      title: "Trees",
+      reference: "trees.html",
+      lessons: [
+        { file: "0006-ask-your-children.html", n: 6, title: "Ask Your Children", problem: "LC 236" },
+      ],
+    },
   ];
 
   function a(href, text, cls) {

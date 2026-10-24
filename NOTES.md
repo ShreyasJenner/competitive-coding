@@ -1,6 +1,24 @@
 # Teaching notes
 
-## ▶ RESUME HERE (end of session 2026-10-22)
+## ▶ RESUME HERE (end of session 2026-10-23)
+
+**LC 236 SOLVED, 18/18** (record 0008). It was attempted cold first with a path-comparison version, which failed on the vine because the path was copied by value. After reading Lesson 6 they wrote the contract version. The template is now in `reference/trees.html`.
+
+**Open the next session with:** (1) a spaced check: "In 236 with p=7, q=4 on the example tree, what does the call on node 5 return, and why?" (Want 2, passed up; they said "both → returns itself" this session.) (2) Offer the next problem with AskUserQuestion. Recommend **LC 198 House Robber** (first DP, an unprompted test of "return your own answer" + overlap). Alternatives: **LC 543 Diameter** cold (tree, return height but track the best: a new twist), **LC 994** grid BFS.
+- **New preference/pattern:** they attempt problems cold before reading the lesson. Build future lessons as "attempt cold first (link the tests) → lesson as the reveal", rather than fighting it.
+- Optional cleanups (both mentioned, status unknown): drop the redundant `a == NULL && b == NULL` branch, and switch the `//` ASCII art in their main to `/* */` (it triggers `-Wcomment`).
+- **Before building the 198 lesson:** close the RESOURCES gap on DP (evaluate CPH ch. 7, USACO Guide Gold DP, Errichto). `assets/tree.js` takes an `algorithm` option if a tree-DP lesson (543/337) comes later.
+
+### Earlier in this session: issuing Lesson 6
+
+**In progress: LC 236 LCA via Lesson 6** (`lessons/trees/0006-ask-your-children.html`), the new **trees** topic. The starter `usr/src/leetcode/236.cpp` returns `root` (8/18 pass by accident). `usr/test/leetcode/236.cpp` has 18 cases: a parent-map reference, a 65535-node complete tree, a 30000-node vine, and a stress test of 3000 random trees. It was verified in the scratchpad: the standard solution and a count+out-param solution both get 18/18, and the "return left early" bug fails 11.
+- **Vine depth is 30000, not 1e5**, because ASan frames overflow the 8 MB stack near 1e5 even for correct code (the count-based solution crashed at 1e5 and passed at 50000).
+- Spaced check at the start of the session: 695 return/max passed. They said "returns the size of the island"; I sharpened it to the per-call view (0 when rejected, otherwise 1 + sum).
+- **What to watch (record 0007):** does their contract comment (step 1 of §5) return their *own* answer, or do they reach for an accumulator/out-param again? A count + out-param solution is correct, so accept it but name the difference. When they're solved: write record 0008 and put their verified template in `reference/trees.html` (placeholder is there).
+- Hints only if they're stuck: the lesson's Hint 1–3 ladder, then point at lines.
+- Next after 236: **LC 198 House Robber** (first DP), as recommended in the lesson.
+
+## Previous resume (end of session 2026-10-22)
 
 **Open the next session with:** (1) a spaced check from memory: "In 695, what does the fill return, and where does the `max` live?" (Want: 0 for water/seen, otherwise `1 + sum of the 4 neighbours`; the max is only in the scan.) (2) Offer the next problem via AskUserQuestion. Recommend **LC 236 LCA** (a lesson; tests "return your own answer" unprompted); alternatives are LC 198 (first DP) and LC 994 (grid BFS).
 
@@ -42,7 +60,7 @@
 - Reference sheets hold back the C++ template until the learner has solved the problem (a placeholder comment marks the spot), then add it, verified against the tests.
 - **Lesson design rule (2026-10-20):** every self-check must have a way to reveal the answer (quiz.js drills show a "Show answer" button after a wrong check), and position/index questions need an index ruler.
 - Spacing: start each session with a quick cold retrieval check on the previous topic before new work.
-- **Lesson layout (learner's request, 2026-10-19):** lessons are grouped by topic in `lessons/<topic>/NNNN-name.html`, and NNNN stays a global sequence number (next free: **0006**). Asset/reference paths from a lesson are `../../assets/` and `../../reference/`. Each lesson's nav is `<nav class="course no-print" data-topic=… data-file=…>`, rendered by `assets/course.js` from its TOPICS list. To add a lesson, add it to TOPICS. To add a topic, add an entry with its reference sheet. `lessons/index.html` is the revision hub listing every topic. The learner wants lessons in a topic to link to each other so they can revise a topic.
+- **Lesson layout (learner's request, 2026-10-19):** lessons are grouped by topic in `lessons/<topic>/NNNN-name.html`, and NNNN stays a global sequence number (next free: **0007**). Asset/reference paths from a lesson are `../../assets/` and `../../reference/`. Each lesson's nav is `<nav class="course no-print" data-topic=… data-file=…>`, rendered by `assets/course.js` from its TOPICS list. To add a lesson, add it to TOPICS. To add a topic, add an entry with its reference sheet. `lessons/index.html` is the revision hub listing every topic. The learner wants lessons in a topic to link to each other so they can revise a topic.
 
 ## Components (assets/)
 
@@ -50,6 +68,7 @@
 - `quiz.js`: `.quiz` multiple choice (data-answer, 0-based), `.drill` fill-ins (data-expect) with "Show answer", `.score`, `button.copy`.
 - `stepper.js`: step-through for recursive code. `step.tape = {text, pos, from}` handles string+cursor (parsers). `Stepper.recorder()` generates steps.
 - `grid.js` (2026-10-21): `Grid.mount(root, {rows, markToggle, maxSteps, algorithm})`. Editable land/water grid, scan+fill stepper (default `Grid.floodDFS`), and a "mark on arrival" toggle that shows the infinite loop. Steps are `{seen, cur, scan, stack, count, note}`.
+- `tree.js` (2026-10-23): `Tree.draw(fig, levelOrder, {labels, marks})` draws a static SVG figure. `Tree.mount(div, {values, p, q, algorithm, pick})` is a stepper with p/q selects (default `Tree.lca`). Steps are `{cur, stack, ret:{id:label}, note}`, so a size/height/DP-on-tree algorithm can reuse it. Classes are `tr-*` in style.css. Check a lesson's rendering with `firefox --headless --no-remote --profile <scratch dir> --screenshot`.
 - A static index ruler can reuse `.st-tape` / `.st-cell` / `.st-idx` markup (see Lesson 5 §0).
 - Test-file pattern worth reusing: embed a reference (brute force or a *different* algorithm, e.g. union-find for 200, a stack evaluator for 1106) plus a seeded random `stress(runs)` that records one case and reports the first mismatch.
 

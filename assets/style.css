@@ -242,6 +242,22 @@ nav.course .course-step .next { margin-left: auto; margin-right: 0; }
 .gr-toggle { font-size: .85rem; margin-left: .4rem; }
 .gr-hint { font-size: .75rem; color: var(--muted); margin: .5rem 0 0; }
 
+/* ---- tree.js ---- */
+.treeviz { margin: 1.4rem 0; outline: none; }
+div.treeviz { padding: 1rem; border: 1px solid var(--rule); border-radius: 4px; }
+div.treeviz:focus-visible { border-color: var(--accent); }
+.treeviz svg { display: block; width: 100%; max-width: 30rem; height: auto; margin: 0 auto .4rem; }
+.tr-edge { stroke: var(--muted); stroke-width: 1.5; }
+.tr-node circle { fill: var(--bg); stroke: var(--fg); stroke-width: 1.5; }
+.tr-node text { fill: var(--fg); font-family: var(--mono); font-size: 13px; }
+.tr-node.tr-target circle { fill: var(--isl3); }
+.tr-node.tr-onstack circle { stroke: var(--muted); stroke-width: 3; stroke-dasharray: 4 3; }
+.tr-node.tr-cur circle { stroke: var(--accent); stroke-width: 3.5; stroke-dasharray: none; }
+.tr-node.tr-answer circle { fill: var(--isl2); }
+.tr-ret { fill: var(--accent); font-family: var(--mono); font-size: 11px; }
+.treeviz select { font: inherit; font-family: var(--mono); font-size: .8rem; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--rule); border-radius: 3px; }
+
 @media print {
   :root { --bg: #fff; --fg: #000; --code-bg: #f4f4f4; }
   body { max-width: none; padding: 0; font-size: 11pt; }
