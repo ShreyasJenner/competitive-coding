@@ -142,6 +142,40 @@
     return steps;
   }
 
+  // Mirrors the pair-returning LC 337 solution: each call hands back
+  // (rob, skip) = the most money in its subtree if it is robbed / if it isn't.
+  function robPair(tree) {
+    const { nodes } = tree;
+    const steps = [], stack = [], ret = {};
+    const snap = (cur, note) => steps.push({ cur, stack: [...stack], ret: { ...ret }, note });
+    const show = ([r, s]) => `(${r}, ${s})`;
+
+    function call(id) {
+      if (id == null) return [0, 0];
+      const t = nodes[id];
+      stack.push(id);
+      if (t.left == null && t.right == null) {
+        ret[id] = show([t.val, 0]);
+        snap(id, `Call on leaf ${t.val}: robbed it is worth ${t.val}, skipped it is worth 0. Return (${t.val}, 0).`);
+        stack.pop();
+        return [t.val, 0];
+      }
+      snap(id, `Call on ${t.val}: ask both children for their pairs first.`);
+      const a = call(t.left), b = call(t.right);
+      const r = t.val + a[1] + b[1];
+      const s = Math.max(...a) + Math.max(...b);
+      ret[id] = show([r, s]);
+      snap(id, `At ${t.val}: children gave ${show(a)} and ${show(b)}. Rob ${t.val}: ${t.val} + ${a[1]} + ${b[1]} = ${r} ` +
+        `(both children skipped). Skip it: ${Math.max(...a)} + ${Math.max(...b)} = ${s} (each child takes its better half).`);
+      stack.pop();
+      return [r, s];
+    }
+    snap(null, "Each call returns (rob, skip): the best for its subtree if this node is robbed, and if it isn't.");
+    const [r, s] = call(tree.root);
+    snap(null, `The root returned (${r}, ${s}). The answer is the larger: ${Math.max(r, s)}.`);
+    return steps;
+  }
+
   function mount(root, { values, p, q, algorithm = lca, pick = true } = {}) {
     const tree = build(values);
     root.innerHTML = "";
@@ -221,5 +255,5 @@
     rebuild();
   }
 
-  window.Tree = { build, draw, mount, lca };
+  window.Tree = { build, draw, mount, lca, robPair };
 })();

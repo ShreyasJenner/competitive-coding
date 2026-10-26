@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynamic Programming Reference</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="course no-print"><a href="../lessons/index.html">All topics &amp; lessons</a></nav>
+
+<h1>Dynamic Programming</h1>
+<p class="subtitle">Quick reference &middot; C++ &middot; sources:
+<a href="https://cses.fi/book/book.pdf#page=75"><em>CPH</em> ch. 7</a>,
+<a href="https://usaco.guide/gold/intro-dp">USACO Guide: Intro to DP</a></p>
+
+<h2>Spot it</h2>
+<ul>
+  <li>&ldquo;Maximum / minimum / number of ways&rdquo;, and every choice affects which choices are left later
+  (<em>CPH</em>: &ldquo;finding an optimal solution&rdquo; or &ldquo;counting the number of solutions&rdquo;)</li>
+  <li>A brute-force recursion is easy to write, but <strong>the same arguments come up again</strong> along different
+  paths</li>
+  <li>Constraints too big for 2<sup><em>n</em></sup>, but small enough for (number of states) &times; (choices per
+  state)</li>
+  <li>Examples: <a href="https://leetcode.com/problems/house-robber/">198</a>,
+  <a href="https://leetcode.com/problems/house-robber-ii/">213</a>,
+  <a href="https://leetcode.com/problems/coin-change/">322</a> (<em>CPH</em>&rsquo;s coin problem),
+  <a href="https://leetcode.com/problems/house-robber-iii/">337</a> (on a tree)</li>
+  <li>On a tree: the parent&rsquo;s choice depends on a <em>fact</em> about the child (was it robbed?), not only on its best value</li>
+</ul>
+
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Meaning here</th></tr>
+  <tr><td>subproblem / state</td><td>one question the recursion asks, named by its arguments, e.g. <code>best(i)</code></td></tr>
+  <tr><td>contract</td><td>what one call promises to return about <em>its own</em> subproblem (same as in <a href="trees.html">Trees</a>)</td></tr>
+  <tr><td>recurrence</td><td>the formula giving a state from smaller states, plus base cases</td></tr>
+  <tr><td>overlapping subproblems</td><td>the same state is reached along many paths, which is why the plain recursion is exponential</td></tr>
+  <tr><td>memoization</td><td>store each state&rsquo;s answer the first time; afterwards, look it up (top-down)</td></tr>
+  <tr><td>sentinel</td><td>a memo value meaning &ldquo;not computed yet&rdquo;; it must never be a real answer</td></tr>
+  <tr><td>tabulation</td><td>fill the same table with a loop, ordered so each entry&rsquo;s inputs are already filled (bottom-up)</td></tr>
+</table>
+
+<h2>The recipe</h2>
+<div class="callout">Write the brute force <strong>as a recursion whose answer depends only on its arguments</strong>. Then
+store each answer the first time it is computed. (<a href="../lessons/dp/0007-ask-each-question-once.html">Lesson 7</a>)</div>
+<ol>
+  <li><strong>Contract:</strong> <code>f(state)</code> = the answer for <em>that part</em> of the problem only.</li>
+  <li><strong>Choices:</strong> what can you do at this state? Each choice gives a smaller state. Combine them with
+  <code>max</code>, <code>min</code> or <code>+</code>.</li>
+  <li><strong>Base cases:</strong> the states with an obvious answer, checked before any recursion.</li>
+  <li><strong>Memo:</strong> an array indexed by the state, a lookup before the work, and a store after it.</li>
+  <li><strong>Cost</strong> &asymp; (number of states) &times; (work per state).</li>
+  <li>Optional: tabulate. Loop in the order that fills each state&rsquo;s inputs first.</li>
+</ol>
+<pre>std::vector&lt;int&gt; memo;              // memo[s] == -1: not computed yet
+int f(int s) {
+    if (/* base */) return /* obvious answer */;
+    if (memo[s] != -1) return memo[s];
+    int ans = /* combine f(smaller states) */;
+    return memo[s] = ans;
+}</pre>
+
+<table>
+  <tr><th>Problem</th><th>State</th><th>Recurrence</th></tr>
+  <tr><td>coin problem (<em>CPH</em> p.&nbsp;66)</td><td><code>solve(x)</code>: fewest coins for sum <em>x</em></td><td><code>min over c of solve(x&minus;c) + 1</code></td></tr>
+  <tr><td>House Robber (198)</td><td><code>best(i)</code>: most money from houses <em>i</em>..<em>n</em>&minus;1</td><td><code>max(best(i+1), nums[i] + best(i+2))</code></td></tr>
+  <tr><td>House Robber III (337)</td><td><code>g(t)</code> = (rob, skip): best for <code>t</code>&rsquo;s subtree if <code>t</code> is / isn&rsquo;t robbed</td><td>rob = <code>val + L.skip + R.skip</code>; skip = <code>max(L) + max(R)</code></td></tr>
+</table>
+
+<h2>DP on a tree</h2>
+<div class="callout">If the parent needs <strong>more than one fact</strong> about a child, the child returns more than one value.
+Each node is then called once, by its parent: O(<em>n</em>), with no memo.
+(<a href="../lessons/dp/0008-two-answers-per-node.html">Lesson 8</a>; <em>CPH</em> &sect;14.2 keeps two values per node for the diameter.)</div>
+<ul>
+  <li>The &ldquo;skip a level&rdquo; recursion (<code>f</code> of the grandchildren) asks about every node twice. On a vine it is 198&rsquo;s plain recursion.</li>
+  <li>If you do memoise on a tree, key by <code>TreeNode*</code>, never by <code>val</code>: values repeat, subtrees don&rsquo;t.</li>
+</ul>
+
+<h2>Pitfalls</h2>
+<table>
+  <tr><th>Bug</th><th>Symptom</th></tr>
+  <tr><td>no memo</td><td>correct, but exponential: small cases pass, then it never finishes (198: about 10<sup>21</sup> calls at <em>n</em> = 100)</td></tr>
+  <tr><td>sentinel <code>0</code> when 0 is a real answer</td><td>the memo never hits on those states, so an all-zero input is exponential again</td></tr>
+  <tr><td>the answer depends on something other than the arguments (a global that changes, a running total)</td><td>stored answers are wrong when they are reused; put it in the state, or return it</td></tr>
+  <tr><td>memo lookup before the base case</td><td><code>memo[n]</code> is read out of bounds: an assertion or ASan crash before the first case finishes</td></tr>
+  <tr><td>lookup, but no store</td><td>the memo never hits, so the code is still exponential (198: correct, then &ldquo;still running after 2 s&rdquo;)</td></tr>
+  <tr><td>memo keyed by a value that doesn&rsquo;t determine the answer (337: <code>t-&gt;val</code>)</td><td>wrong answers wherever two states share the key</td></tr>
+  <tr><td>passing the input vector by value</td><td>a copy per call: O(<em>n</em>) extra work per call</td></tr>
+  <tr><td>loop in the wrong direction</td><td>reads entries that aren&rsquo;t filled yet (still 0 or &minus;1)</td></tr>
+</table>
+
+<h2>Template (LC 198)</h2>
+<p>Two correct states. Both pass 20/20 (<code>./test.sh 198</code>), and both were stress-tested on 200,000 random streets.</p>
+<pre>// A: best(i) = most money from houses i..n-1 (the lesson's). Skip or rob covers every plan.
+int rob(std::vector&lt;int&gt;&amp; nums) {
+    int n = nums.size();
+    std::vector&lt;int&gt; best(n + 2, 0);              // best[n] = best[n+1] = 0: no houses left
+    for (int i = n - 1; i &gt;= 0; i--)              // reads i+1, i+2: fill right to left
+        best[i] = std::max(best[i + 1], nums[i] + best[i + 2]);
+    return best[0];
+}</pre>
+<pre>// B: best[i] = most money from houses i..n-1 GIVEN house i is robbed (the learner's, cold).
+// The next robbed house is i+2 or i+3, never i+4+: adding i+2 stays legal and,
+// since nums &gt;= 0, can't lower the total. Breaks on negatives: [5,-1,-1,-1,5].
+best[i] = nums[i] + max(best[i+2], best[i+3]);   answer = max(best[0], best[1])</pre>
+<table>
+  <tr><th>State</th><th>Cost</th><th>Relies on</th></tr>
+  <tr><td>A: skip or rob</td><td>O(<em>n</em>) time; O(1) memory with two variables</td><td>nothing; no base-case special cases</td></tr>
+  <tr><td>B: house i robbed</td><td>O(<em>n</em>)</td><td><code>nums &ge; 0</code> (exchange argument), plus special cases for <em>n</em> &le; 2</td></tr>
+</table>
+<p>Compare: <a href="https://walkccc.me/LeetCode/problems/198/">walkccc 198</a>.</p>
+
+</body>
+</html>

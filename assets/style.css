@@ -258,6 +258,30 @@ div.treeviz:focus-visible { border-color: var(--accent); }
 .treeviz select { font: inherit; font-family: var(--mono); font-size: .8rem; color: var(--fg); background: var(--bg);
   border: 1px solid var(--rule); border-radius: 3px; }
 
+/* ---- calltree.js ---- */
+.calltree { margin: 1.4rem 0; padding: 1rem; border: 1px solid var(--rule); border-radius: 4px; }
+.ct-fig svg { display: block; width: 100%; max-height: 22rem; height: auto; margin: .8rem auto .4rem; }
+.ct-node circle { stroke: var(--fg); stroke-width: 1.2; }
+.ct-node text { fill: var(--fg); font-family: var(--mono); font-size: 11px; }
+.ct-c0 circle, .ct-chip.ct-c0 { fill: var(--isl1); background: var(--isl1); }
+.ct-c1 circle, .ct-chip.ct-c1 { fill: var(--isl2); background: var(--isl2); }
+.ct-c2 circle, .ct-chip.ct-c2 { fill: var(--isl3); background: var(--isl3); }
+.ct-c3 circle, .ct-chip.ct-c3 { fill: var(--isl4); background: var(--isl4); }
+.ct-c4 circle, .ct-chip.ct-c4 { fill: var(--isl5); background: var(--isl5); }
+.ct-c5 circle, .ct-chip.ct-c5 { fill: var(--isl6); background: var(--isl6); }
+.ct-base circle { fill: var(--water); stroke: var(--muted); }
+.ct-base text { fill: var(--muted); font-size: 9px; }
+.ct-hit circle { fill: var(--bg); stroke: var(--muted); stroke-dasharray: 3 2; }
+.ct-hit text { fill: var(--muted); }
+.ct-dim { opacity: .15; }
+.ct-tally { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; margin: .3rem 0 .6rem; }
+.ct-chip {
+  font: inherit; font-family: var(--mono); font-size: .72rem; color: var(--fg);
+  border: 2px solid transparent; border-radius: 3px; padding: .1rem .4rem; cursor: pointer;
+}
+.ct-chip.ct-on { border-color: var(--accent); }
+.calltree input[type="range"] { vertical-align: middle; }
+
 @media print {
   :root { --bg: #fff; --fg: #000; --code-bg: #f4f4f4; }
   body { max-width: none; padding: 0; font-size: 11pt; }

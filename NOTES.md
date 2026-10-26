@@ -1,6 +1,38 @@
 # Teaching notes
 
-## ▶ RESUME HERE (end of session 2026-10-23)
+## ▶ RESUME HERE (end of session 2026-10-26)
+
+**State:** LC 198 is solved twice (cold loop, then a top-down memo; record 0009). `usr/src/leetcode/198.cpp` now holds the **memo** version, and the loop version is in `reference/dp.html`. **LC 337 has been issued but not started**: the starter is untouched and Lesson 8 hasn't been read (as far as I know).
+
+**Open the next session with:**
+1. A spaced check, from memory: "In a memoised recursion, which goes first, the base case or the lookup, and why? What happens if you look up but never store?" (Want: base case first, because `memo[n]` doesn't exist; with no store the memo never hits, so it is still exponential. They saw that timeout themselves.)
+2. A spaced check on the exchange argument: "Your loop-version 198 never looks at best[i+4]. Why is that safe, and what input breaks it?" (Want: adding house i+2 stays legal and costs nothing since nums ≥ 0; negatives break it.)
+3. Resume LC 337: ask whether they want to try it cold (their usual habit) or read Lesson 8 first. Details below.
+
+### LC 337 issue notes
+
+**Issued LC 337 House Robber III (learner's choice)** via Lesson 8, `lessons/dp/0008-two-answers-per-node.html`. The starter `usr/src/leetcode/337.cpp` returns 0 (2/15 pass). The test `usr/test/leetcode/337.cpp` has 15 cases: a bitmask reference (≤14 nodes) with stress(400) and a mix of small and large value ranges, an 8191-node complete tree, a random 10000-node tree, and 10000-node vines. Each `rob` call has a 2 s SIGALRM limit.
+- Verified in the scratchpad: the pair version and the `TreeNode*` memo get 15/15. The grandchildren recursion without a memo gets 12, then times out on the random 10000-node tree. The 0-sentinel memo (`if (m[t])`) gets 14, then times out on the all-empty vine. The memo keyed by `val` fails 4, including `[0,4,4,9,null,null,null,9]` → 26 instead of 17. The alternate-levels sum fails 4.
+- `assets/tree.js` now has `Tree.robPair` (a pair stepper; mount it with `pick: false`). The lesson reuses `CallTree` with `name: "f"` (on a vine, 337 is 198).
+- **Watch:** do they reach for the pair unprompted (their 198 "robbed" state) or for the grandchildren recursion? Is the base case `nullptr` → (0,0) first? Is there a `max` on the wrong half in `rob`?
+- When solved: write record 0010, add their template to `reference/dp.html`, and offer next: **LC 543 Diameter** cold (CPH §14.2's two values), LC 213, LC 322, or LC 994.
+
+## Earlier on 2026-10-26
+
+**LC 198 SOLVED, 20/20** (record 0009). After reading only §1 they went straight to a right-to-left loop with a "house i is robbed" state, `nums[i] + max(best[i+2], best[i+3])`. They missed the exchange argument for why i+4 is never needed (it relies on nums ≥ 0), so I explained it. Both templates are now in `reference/dp.html`.
+**Open the next session with:** (1) a spaced check: "Why does your 198 never look at best[i+4]? What would break it?" (Want: adding i+2 is legal and nums ≥ 0, so it can't hurt; negatives break it.) (2) The top-down memo is DONE (20/20 after two pointers: lookup before base case caused an OOB crash; the store was missing). Spaced check: "In a memoised recursion, which goes first, the base case or the lookup, and why?" (3) Offer next with AskUserQuestion. Recommend **LC 337 House Robber III** (tree DP, natural top-down; their robbed/not-robbed state is the per-node pair). Alternatives: LC 213 cold, LC 322 Coin Change (CPH's coin problem), LC 994 grid BFS.
+
+### Earlier this session: issuing Lesson 7
+
+**Spaced check passed:** for 236 with p=7, q=4, they said f(5) returns 2. Their reasoning: 6 returns NULL, 2 returns itself (both sides found something), and 5 passes the non-null result up. This fixes record 0008's "both → myself" imprecision. A minor slip: they called the return value "a number"; it is a node pointer.
+
+**Issued LC 198 House Robber (learner's choice, my recommendation): the first DP, new topic `dp`.** Lesson 7 is `lessons/dp/0007-ask-each-question-once.html`, the reference sheet is `reference/dp.html` (template placeholder), and there is a new component, `assets/calltree.js`. The starter `usr/src/leetcode/198.cpp` returns 0 (3/20 pass). The test `usr/test/leetcode/198.cpp` has 20 cases, a bitmask reference (n ≤ 16) with stress(1000), and a **2 s SIGALRM limit per case**. A timeout prints a FAIL line with the summary and stops the run.
+- Verified in the scratchpad: memo(-1) and the loop get 20/20. Plain recursion gets 14 passes, then times out on the first 100-house case (all 400s); its 30-house case runs well under the limit. A memo with 0 as the sentinel gets 18, then times out on "100 houses, all empty". The even/odd greedy fails the 4 skip-two cases.
+- The lesson is cold-first (§0). Steps: write the plain recursion **first**, predict the pass count, add the memo, then predict the 0-sentinel failure.
+- **What to watch:** (1) Do they write `best(i)` as "return your own answer" unprompted, or reach for an accumulator, a running total in a parameter (a memo can't store that), or a global? That is the record 0007/0008 thread. (2) The vector passed by value in the helper (the 236 blind spot). (3) A 0 sentinel.
+- When solved: write record 0009, put their verified template in `reference/dp.html`, and offer next: **LC 337 House Robber III** (tree + DP; tree.js `algorithm` option) or **LC 213** cold.
+
+## Previous resume (end of session 2026-10-23)
 
 **LC 236 SOLVED, 18/18** (record 0008). It was attempted cold first with a path-comparison version, which failed on the vine because the path was copied by value. After reading Lesson 6 they wrote the contract version. The template is now in `reference/trees.html`.
 
@@ -60,7 +92,7 @@
 - Reference sheets hold back the C++ template until the learner has solved the problem (a placeholder comment marks the spot), then add it, verified against the tests.
 - **Lesson design rule (2026-10-20):** every self-check must have a way to reveal the answer (quiz.js drills show a "Show answer" button after a wrong check), and position/index questions need an index ruler.
 - Spacing: start each session with a quick cold retrieval check on the previous topic before new work.
-- **Lesson layout (learner's request, 2026-10-19):** lessons are grouped by topic in `lessons/<topic>/NNNN-name.html`, and NNNN stays a global sequence number (next free: **0007**). Asset/reference paths from a lesson are `../../assets/` and `../../reference/`. Each lesson's nav is `<nav class="course no-print" data-topic=… data-file=…>`, rendered by `assets/course.js` from its TOPICS list. To add a lesson, add it to TOPICS. To add a topic, add an entry with its reference sheet. `lessons/index.html` is the revision hub listing every topic. The learner wants lessons in a topic to link to each other so they can revise a topic.
+- **Lesson layout (learner's request, 2026-10-19):** lessons are grouped by topic in `lessons/<topic>/NNNN-name.html`, and NNNN stays a global sequence number (next free: **0009**). Asset/reference paths from a lesson are `../../assets/` and `../../reference/`. Each lesson's nav is `<nav class="course no-print" data-topic=… data-file=…>`, rendered by `assets/course.js` from its TOPICS list. To add a lesson, add it to TOPICS. To add a topic, add an entry with its reference sheet. `lessons/index.html` is the revision hub listing every topic. The learner wants lessons in a topic to link to each other so they can revise a topic.
 
 ## Components (assets/)
 
@@ -69,6 +101,8 @@
 - `stepper.js`: step-through for recursive code. `step.tape = {text, pos, from}` handles string+cursor (parsers). `Stepper.recorder()` generates steps.
 - `grid.js` (2026-10-21): `Grid.mount(root, {rows, markToggle, maxSteps, algorithm})`. Editable land/water grid, scan+fill stepper (default `Grid.floodDFS`), and a "mark on arrival" toggle that shows the infinite loop. Steps are `{seen, cur, scan, stack, count, note}`.
 - `tree.js` (2026-10-23): `Tree.draw(fig, levelOrder, {labels, marks})` draws a static SVG figure. `Tree.mount(div, {values, p, q, algorithm, pick})` is a stepper with p/q selects (default `Tree.lca`). Steps are `{cur, stack, ret:{id:label}, note}`, so a size/height/DP-on-tree algorithm can reuse it. Classes are `tr-*` in style.css. Check a lesson's rendering with `firefox --headless --no-remote --profile <scratch dir> --screenshot`.
+- `calltree.js` (2026-10-26): `CallTree.mount(div, {n, min, max, root, children, isBase, name})` draws the call tree of a recursion on one int argument, one colour per argument. It has a per-argument tally (click to highlight), a memo toggle (repeats become dashed lookups), and a BigInt call count for large n. The defaults are 198's `best(i)`. Other 1D DPs (coin change, climbing stairs) can reuse it by passing `children`/`isBase`.
+- Timeout pattern for tests that must catch an exponential solution: `alarm(LIMIT)` per case, and a SIGALRM handler that writes a prebuilt FAIL line plus the summary line with `write()`, then `_exit(1)` (see `usr/test/leetcode/198.cpp`).
 - A static index ruler can reuse `.st-tape` / `.st-cell` / `.st-idx` markup (see Lesson 5 §0).
 - Test-file pattern worth reusing: embed a reference (brute force or a *different* algorithm, e.g. union-find for 200, a stack evaluator for 1106) plus a seeded random `stress(runs)` that records one case and reports the first mismatch.
 

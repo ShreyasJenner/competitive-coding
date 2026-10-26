@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Answers per Node</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/course.js"></script>
+<script src="../../assets/quiz.js"></script>
+<script src="../../assets/tree.js"></script>
+<script src="../../assets/calltree.js"></script>
+</head>
+<body>
+
+<nav class="course no-print" data-topic="dp" data-file="0008-two-answers-per-node.html">
+  <a href="../index.html">All topics</a>
+  <a href="../../reference/dp.html">Reference sheet</a>
+</nav>
+
+<h1>Two Answers per Node</h1>
+<p class="subtitle">LC 337 House Robber III: when a parent needs more than one fact about its child, the child returns
+more than one value, and the repeated work disappears without a memo</p>
+
+<div class="win">
+  <strong>Your win today:</strong> solve a DP on a tree in O(<em>n</em>) with one post-order pass and no memo, by making
+  each call return a <em>pair</em>. This combines Lesson 6&rsquo;s &ldquo;ask your children&rdquo; with Lesson 7&rsquo;s
+  &ldquo;ask each question once&rdquo;, using the &ldquo;robbed / not robbed&rdquo; state you invented for 198.
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>0. Attempt it cold</h2>
+
+<p><code>usr/src/leetcode/337.cpp</code> is a starter that returns 0, and <code>./test.sh 337</code> runs 15 cases: the
+examples, small trees where the best plan skips a level or mixes levels, a tree where two nodes share a value but have
+different answers, 400 random trees checked against a brute force over every set of nodes, an 8,191-node complete tree, a
+random 10,000-node tree, and two 10,000-node vines. As in 198, every case has a <strong>2-second limit</strong>.</p>
+
+<p>Try it before reading on. If you hit <code>still running after 2 s</code>, &sect;2 explains why.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>1. Warm-up from <a href="0007-ask-each-question-once.html">198</a></h2>
+
+<div class="quiz" data-answer="1">
+  <p class="q">1. In your memoised <code>best(i)</code>, why must the <code>i &gt;= n</code> check come before the memo
+  lookup?</p>
+  <button class="opt">it makes every lookup run faster</button>
+  <button class="opt">memo[n] would read out of bounds</button>
+  <button class="opt">the base case must be stored</button>
+  <button class="opt">the compiler requires this exact order</button>
+  <p class="explain"><code>memo</code> has <em>n</em> entries, but the recursion asks for <code>best(n)</code> and
+  <code>best(n+1)</code>. That was your crash. Base cases come first because they are the calls that have no memo slot.
+  The same applies today: <code>nullptr</code> has no entry in anything.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>2. The obvious contract, and its repeated work</h2>
+
+<p>Use Lesson 6&rsquo;s shape: <code>f(t)</code> = the most money from <code>t</code>&rsquo;s subtree. Lesson 7
+gives the choice. Rob <code>t</code>, and its children are off limits, so add the <em>grandchildren&rsquo;s</em>
+<code>f</code>. Or skip <code>t</code>, and take <code>f(left) + f(right)</code>.</p>
+
+<figure class="treeviz" id="ex2"><figcaption>LeetCode&rsquo;s example 2: <code>[3,4,5,1,3,null,1]</code></figcaption></figure>
+
+<div class="drill">
+  <p class="q">Fill in from the bottom up:</p>
+  <div class="row"><label><code>f(4)</code> = <input data-expect="4"></label></div>
+  <div class="row"><label><code>f(5)</code> = <input data-expect="5"></label></div>
+  <div class="row"><label><code>f(3)</code> (the root) = <input data-expect="9"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">Robbing 4 gives 4, and skipping it gives its children 1 + 3 = 4, so <code>f(4)</code> is 4. Robbing 5 gives 5,
+  and skipping it gives 1, so 5. Robbing the root gives 3 + its grandchildren 1 + 3 + 1 = 8, and skipping it gives
+  <code>f(4) + f(5)</code> = 9. The answer is 9.</p>
+</div>
+
+<p>That is correct, but look at who asks about each node. Node 4&rsquo;s left child is asked once by node 4 (&ldquo;skip
+4&rdquo;) and again by the root (&ldquo;rob 3, take grandchildren&rdquo;). <strong>Every node gets asked by its parent
+and by its grandparent.</strong> On a long vine, where each node has one child, that is LC 198&rsquo;s plain recursion
+exactly: number the nodes by depth, and <code>f(i)</code> calls <code>f(i+1)</code> and <code>f(i+2)</code>.</p>
+
+<div class="calltree no-print" id="ct"></div>
+
+<p>The test&rsquo;s 10,000-node vine has the same blow-up as your 100-house street, only worse. There are two
+fixes.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>3. Fix A: a memo keyed by the node</h2>
+
+<p>The state is now a node rather than an index, so the memo is a map from node to answer:
+<code>std::unordered_map&lt;TreeNode*, int&gt;</code>. As before, put the base case first, look up before the work, and
+store after it.</p>
+
+<div class="quiz" data-answer="2">
+  <p class="q">2. You key the memo by <code>t-&gt;val</code> instead of by <code>t</code>. What goes wrong?</p>
+  <button class="opt">Lookups become O(n) each time</button>
+  <button class="opt">Null children crash the map</button>
+  <button class="opt">Equal values share one answer</button>
+  <button class="opt">Nothing; values identify subtrees uniquely</button>
+  <p class="explain">The memo&rsquo;s key has to be <em>everything the answer depends on</em>. Here the answer depends on
+  the whole subtree, not on the node&rsquo;s value. Two nodes with value 4 can sit on top of very different subtrees,
+  which is exactly the test&rsquo;s <code>[0,4,4,9,null,null,null,9]</code> case. The pointer names the subtree, which is
+  the same lesson as 236&rsquo;s &ldquo;compare pointers, not values&rdquo;.</p>
+</div>
+
+<p>Fix A works, and it is O(<em>n</em>). But it&rsquo;s a patch on a contract that asks too much. The root needs facts
+about its grandchildren only because <code>f(child)</code> doesn&rsquo;t say <em>whether the child was robbed</em>.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>4. Fix B: return both answers</h2>
+
+<p>In your 198 solution, <code>best[i]</code> meant &ldquo;house <code>i</code> <em>is</em> robbed&rdquo;. Keep that idea
+and add its partner. <em>CPH</em> does the same in its tree-diameter algorithm: &ldquo;We calculate for each node
+x two values&rdquo; (<a href="https://cses.fi/book/book.pdf#page=146">ch.&nbsp;14, PDF p.&nbsp;146</a>). Write your
+contract for <code>g(t)</code> down before opening the box.</p>
+
+<details><summary>The pair contract (open once you&rsquo;ve written yours)</summary>
+<p><code>g(t)</code> returns two numbers about <code>t</code>&rsquo;s subtree:</p>
+<table>
+  <tr><th>Value</th><th>Means</th><th>From the children&rsquo;s pairs</th></tr>
+  <tr><td><code>rob</code></td><td>the best if <code>t</code> <strong>is</strong> robbed</td><td><code>t-&gt;val + left.skip + right.skip</code></td></tr>
+  <tr><td><code>skip</code></td><td>the best if <code>t</code> <strong>isn&rsquo;t</strong></td><td><code>max(left.rob, left.skip) + max(right.rob, right.skip)</code></td></tr>
+</table>
+<p>The base case is <code>g(nullptr) = (0, 0)</code>, and the answer is <code>max</code> of <code>g(root)</code>&rsquo;s pair. Each
+node is called exactly once, by its parent, so there is no repeated work and nothing to memoise. The skip-or-rob choice
+from 198 is now made <em>one level up</em>, by the parent.</p>
+</details>
+
+<div class="quiz" data-answer="3">
+  <p class="q">3. <code>t-&gt;val</code> is 6. Its children returned <code>(5, 2)</code> and <code>(3, 4)</code> as
+  <code>(rob, skip)</code>. What does <code>g(t)</code> return?</p>
+  <button class="opt">(14, 9)</button>
+  <button class="opt">(12, 8)</button>
+  <button class="opt">(14, 7)</button>
+  <button class="opt">(12, 9)</button>
+  <p class="explain">Robbing <code>t</code> forces both children to be skipped: 6 + 2 + 4 = 12. Skipping <code>t</code> lets
+  each child take its better half: max(5, 2) + max(3, 4) = 5 + 4 = 9. Note that the right child does better
+  <em>skipped</em> (4 &gt; 3). &ldquo;Robbed&rdquo; is not always the bigger number.</p>
+</div>
+
+<div class="drill">
+  <p class="q">LeetCode&rsquo;s example 1, <code>[3,2,3,null,3,null,1]</code>. The leaves 3 and 1 return
+  <code>(3, 0)</code> and <code>(1, 0)</code>.</p>
+  <div class="row"><code>g(2)</code> <label>rob <input data-expect="2"></label> <label>skip <input data-expect="3"></label></div>
+  <div class="row"><code>g(right 3)</code> <label>rob <input data-expect="3"></label> <label>skip <input data-expect="1"></label></div>
+  <div class="row"><code>g(root 3)</code> <label>rob <input data-expect="7"></label> <label>skip <input data-expect="6"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">Node 2 has only a right leaf 3. Robbing it gives 2 + 0 + 0 = 2, and skipping it gives max(3, 0) = 3. The right-hand 3
+  has a leaf 1: robbed it is 3, skipped it is 1. At the root, robbing gives 3 + 3 + 1 = 7, and skipping gives
+  max(2, 3) + max(3, 1) = 6. The answer is 7: the root plus the two bottom leaves.</p>
+</div>
+
+<p>Step through it on example 2:</p>
+<div class="treeviz no-print" id="tv"></div>
+
+<div class="quiz" data-answer="1">
+  <p class="q">4. What does the pair version cost on <em>n</em> nodes with height <em>h</em>?</p>
+  <button class="opt">O(n&sup2;) time, O(h) stack</button>
+  <button class="opt">O(n) time, O(h) stack</button>
+  <button class="opt">O(2&#8319;) time, O(n) stack</button>
+  <button class="opt">O(n) time, O(n) map</button>
+  <p class="explain">One call per node, each doing O(1) work with its children&rsquo;s pairs: that is 236&rsquo;s cost. No map
+  is needed, because no question is asked twice. On the 10,000-node vine, <em>h</em> = <em>n</em>, which is why the test
+  stops there and not at 10<sup>5</sup>.</p>
+</div>
+<p class="score"></p>
+
+<p class="sidenote">Name check: picking nodes so that no two are joined by an edge, and maximising their total, is the
+<em>maximum-weight independent set</em>. <em>CPH</em> notes that finding a maximum independent set &ldquo;in a general graph
+is a NP-hard problem&rdquo; (<a href="https://cses.fi/book/book.pdf#page=200">PDF p.&nbsp;200</a>). On a tree, these two
+numbers per node make it linear.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>5. Your turn: <code>usr/src/leetcode/337.cpp</code></h2>
+
+<ol>
+  <li>Write the pair contract as a comment, in your own words.</li>
+  <li>Write a helper that returns the pair. <code>std::pair&lt;int,int&gt;</code>, <code>std::array&lt;int,2&gt;</code>
+  or a two-field <code>struct</code> are all fine. Return it by value, since it is only two ints.</li>
+  <li>Run <code>./test.sh 337</code>. Expect 15/15.</li>
+  <li><strong>Predict, then try:</strong> if <code>rob</code> used <code>max(left.rob, left.skip)</code> instead of
+  <code>left.skip</code>, which kind of case would fail?</li>
+  <li>Optional: also write Fix A (the memo keyed by <code>TreeNode*</code>). Does it pass the all-empty vine on the first
+  try?</li>
+</ol>
+
+<details><summary>Hint 1</summary>
+<p>What pair does an empty subtree return? Neither option has any money in it.</p></details>
+<details><summary>Hint 2</summary>
+<p>If <code>t</code> is robbed, neither child may be. Which half of each child&rsquo;s pair is allowed?</p></details>
+<details><summary>Hint 3</summary>
+<p>If <code>t</code> is skipped, each child is free to be robbed or not, independently of the other. Take each
+child&rsquo;s better half.</p></details>
+
+<hr>
+
+<h3>Primary source</h3>
+<p><a href="https://cses.fi/book/book.pdf#page=144"><em>CPH</em> &sect;14.1 &ldquo;Dynamic programming&rdquo; and
+&sect;14.2 &ldquo;Diameter&rdquo;</a> (printed pp.&nbsp;134&ndash;136). Read <code>count[s]</code> for the one-value
+shape, then Algorithm&nbsp;1 for the diameter, where each node keeps <em>two</em> values
+(<code>toLeaf</code>, <code>maxLength</code>) for the same reason you keep <code>rob</code> and <code>skip</code>. Once
+you&rsquo;re green, compare with <a href="https://walkccc.me/LeetCode/problems/337/">walkccc 337</a>.</p>
+
+<p><strong>Next:</strong> <a href="https://leetcode.com/problems/diameter-of-binary-tree/">LC 543 Diameter</a> cold.
+It is <em>CPH</em>&rsquo;s two-values idea on a binary tree: return one thing (a height) and track another (the best
+path). Or try <a href="https://leetcode.com/problems/house-robber-ii/">LC 213</a>, where the street is a circle.</p>
+
+<p class="callout">Stuck, or something feels hand-wavy? <strong>Ask me.</strong> Paste your code or the
+<code>./test.sh 337</code> output and I&rsquo;ll point at the line without rewriting it.</p>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const ex2 = [3, 4, 5, 1, 3, null, 1];
+    Tree.draw(document.getElementById("ex2"), ex2);
+    Tree.mount(document.getElementById("tv"), { values: ex2, algorithm: Tree.robPair, pick: false });
+    CallTree.mount(document.getElementById("ct"), { n: 6, min: 2, max: 7, name: "f" });
+  });
+</script>
+</body>
+</html>

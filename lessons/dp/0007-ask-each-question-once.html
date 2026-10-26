@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask Each Question Once</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/course.js"></script>
+<script src="../../assets/quiz.js"></script>
+<script src="../../assets/calltree.js"></script>
+</head>
+<body>
+
+<nav class="course no-print" data-topic="dp" data-file="0007-ask-each-question-once.html">
+  <a href="../index.html">All topics</a>
+  <a href="../../reference/dp.html">Reference sheet</a>
+</nav>
+
+<h1>Ask Each Question Once</h1>
+<p class="subtitle">LC 198 House Robber: write the brute-force recursion first, find the questions it asks twice, and
+answer each one only once</p>
+
+<div class="win">
+  <strong>Your win today:</strong> turn an exponential brute force into an O(<em>n</em>) solution by adding three
+  lines, without changing its logic. This is the whole idea of dynamic programming, and the mission&rsquo;s
+  &ldquo;spot the redundant work&rdquo; skill in its purest form.
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>0. Attempt it cold</h2>
+
+<p>You like to try first, so try first. <code>usr/src/leetcode/198.cpp</code> is a starter that returns 0, and
+<code>./test.sh 198</code> runs 20 cases: the examples, one or two houses, streets where the best plan skips two houses in
+a row, 1,000 random streets checked against a brute force over every set of houses, and six streets of 99 or 100 houses.</p>
+
+<p>Every case has a <strong>2-second limit</strong>. If your code is correct but asks the same question many times, it
+passes the small cases and then prints <code>still running after 2 s</code> on the first 100-house street. That is not
+a logic bug. It is today&rsquo;s lesson, so read on from &sect;1. If you&rsquo;re fully green, skim to &sect;4 and
+do the quizzes anyway.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>1. Return your own answer, again</h2>
+
+<p>In <a href="../trees/0006-ask-your-children.html">236</a>, <code>f(t)</code> answered for <em>t&rsquo;s
+subtree</em> and nothing else. In <a href="../graphs/0005-every-cell-is-a-node.html">695</a>, a fill returned
+<em>its island&rsquo;s</em> size. Here the &ldquo;subtree&rdquo; is the rest of the street:</p>
+
+<div class="callout"><code>best(i)</code> = the most money you can rob from houses <code>i, i+1, &hellip;, n&minus;1</code>,
+ignoring every house before <code>i</code>. The answer is <code>best(0)</code>.</div>
+
+<p><em>CPH</em> puts it this way: &ldquo;formulate the problem recursively so that the solution to the problem can be
+calculated from solutions to smaller subproblems&rdquo; (<a href="https://cses.fi/book/book.pdf#page=76">ch.&nbsp;7,
+PDF p.&nbsp;76</a>). Use only the contract to fill these in. Start at the end of the street, where the answer is
+obvious, and work back:</p>
+
+<div class="drill">
+  <p class="q"><code>nums = [2, 7, 9, 3, 1]</code> (house 0 holds 2, house 4 holds 1)</p>
+  <div class="row"><label><code>best(4)</code> = <input data-expect="1"></label></div>
+  <div class="row"><label><code>best(3)</code> = <input data-expect="3"></label></div>
+  <div class="row"><label><code>best(2)</code> = <input data-expect="10"></label></div>
+  <div class="row"><label><code>best(1)</code> = <input data-expect="10"></label></div>
+  <div class="row"><label><code>best(0)</code> = <input data-expect="12"></label></div>
+  <button class="check">Check</button>
+  <p class="explain">Only house 4 is left, so rob it: 1. From house 3, take either 3 or 1, not both: 3. From house 2, rob 9
+  and then house 4: 10. From house 1, robbing 7 leaves houses 3 onward (3 more), which ties with skipping it (10). From house
+  0, robbing 2 leaves houses 2 onward (10 more): 12. Notice that you never re-solved a later street. You reused the
+  number you had just written down. Keep that in mind for &sect;3.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>2. One choice per house</h2>
+
+<p>At house <code>i</code> there are exactly two options, and the contract gives each one a value.</p>
+
+<div class="quiz" data-answer="1">
+  <p class="q">1. You rob house <code>i</code>. Which house is the next one you may consider?</p>
+  <button class="opt">house i+1, next door</button>
+  <button class="opt">house i+2, skipping one</button>
+  <button class="opt">house i&minus;1, just behind</button>
+  <button class="opt">any house after i</button>
+  <p class="explain">House <code>i+1</code> is next door and off limits. From <code>i+2</code> onward, anything is allowed,
+  and that is exactly what <code>best(i+2)</code> promises to handle. Houses before <code>i</code> aren&rsquo;t this
+  call&rsquo;s business, as the contract says.</p>
+</div>
+
+<details><summary>The recurrence (open once you&rsquo;ve written yours)</summary>
+<pre>best(i) = 0                                     if i &ge; n   (no houses left)
+best(i) = max( best(i+1),                       skip house i
+               nums[i] + best(i+2) )            rob house i</pre>
+<p>Compare <em>CPH</em>&rsquo;s coin problem, <code>solve(x) = min over c of solve(x&minus;c) + 1</code>
+(<a href="https://cses.fi/book/book.pdf#page=76">PDF p.&nbsp;76</a>): it has the same shape, with more choices and a
+<code>min</code>. Written straight into C++, this is a correct solution. It is also hopeless at 100 houses. &sect;3 shows
+why.</p>
+</details>
+
+<!-- ───────────────────────────────────────── -->
+<h2>3. Find the repeated work</h2>
+
+<p><code>best(0)</code> calls <code>best(1)</code> and <code>best(2)</code>. But <code>best(1)</code> <em>also</em> calls
+<code>best(2)</code>. <strong>Predict before you look:</strong> with 6 houses and no memo, how many times is each call
+made?</p>
+
+<div class="drill">
+  <p class="q">6 houses, plain recursion, starting from <code>best(0)</code>:</p>
+  <div class="row"><label><code>best(2)</code> is called <input data-expect="2"> times</label></div>
+  <div class="row"><label><code>best(3)</code> is called <input data-expect="3"> times</label></div>
+  <div class="row"><label><code>best(4)</code> is called <input data-expect="5"> times</label></div>
+  <button class="check">Check</button>
+  <p class="explain">Every call on <code>i</code> comes from a call on <code>i&minus;1</code> (skip) or on <code>i&minus;2</code>
+  (rob), so <code>count(i) = count(i&minus;1) + count(i&minus;2)</code>: 1, 1, 2, 3, 5, 8, &hellip; These are the Fibonacci
+  numbers, which grow by a factor of about 1.6 per house. In <em>CPH</em>&rsquo;s words, the plain version &ldquo;is not
+  efficient, because there may be an exponential number of ways&rdquo; (<a href="https://cses.fi/book/book.pdf#page=77">PDF
+  p.&nbsp;77</a>).</p>
+</div>
+
+<p>Now check it. Click <code>best(4)</code> in the tally to light up every call on it. Each lit subtree is identical
+work, because <code>best(4)</code> depends only on <code>4</code>, never on how you got there. Then tick
+<em>memo</em>.</p>
+
+<div class="calltree no-print" id="ct"></div>
+
+<p>This is the core idea. A call&rsquo;s answer depends <strong>only on its arguments</strong>, so the same argument
+always gives the same answer. There are only <em>n</em> different questions (<code>best(0)</code> to
+<code>best(n&minus;1)</code>), yet the plain recursion asks them about 10<sup>21</sup> times. The redundant work is every
+call after the first one on each argument. <em>CPH</em> calls these <em>overlapping subproblems</em>
+(<a href="https://cses.fi/book/book.pdf#page=75">PDF p.&nbsp;75</a>). In 236 every call was on a different node, so there
+was nothing to save.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>4. Memoization: write it down the first time</h2>
+
+<div class="callout">&ldquo;The values of the function are stored in an array after calculating them. For each parameter,
+the value of the function is calculated recursively only once, and after this, the value can be directly retrieved from the
+array.&rdquo; (<a href="https://cses.fi/book/book.pdf#page=77"><em>CPH</em> ch.&nbsp;7, PDF p.&nbsp;77</a>)</div>
+
+<p>That takes three changes to the plain recursion: an array indexed by the argument, a lookup <em>before</em> the work, and a
+store <em>after</em> it. The logic in between doesn&rsquo;t change. <em>CPH</em> uses a separate <code>ready[x]</code> array
+to mark which answers are stored. Most people use one array and a value that can never be a real answer.</p>
+
+<div class="quiz" data-answer="2">
+  <p class="q">2. Your memo starts full of <code>0</code>, and <code>best(i)</code> begins with
+  <code>if (memo[i]) return memo[i];</code>. What happens on 100 empty houses?</p>
+  <button class="opt">Wrong answer, returns a negative</button>
+  <button class="opt">Crashes with an index overflow</button>
+  <button class="opt">Correct answer, but exponential time</button>
+  <button class="opt">Correct answer, in linear time</button>
+  <p class="explain">Every answer on that street is 0, so a stored answer looks the same as &ldquo;not done yet&rdquo;, and
+  every call recomputes. The memo is there, but it never hits. Use <code>-1</code>, since money is never negative. The
+  test&rsquo;s &ldquo;100 houses, all empty&rdquo; case is there to catch exactly this.</p>
+</div>
+
+<div class="quiz" data-answer="3">
+  <p class="q">3. With the memo, what does <code>best(0)</code> cost on <em>n</em> houses?</p>
+  <button class="opt">O(2&#8319;) time, O(n) memory</button>
+  <button class="opt">O(n&sup2;) time, O(n) memory</button>
+  <button class="opt">O(n&middot;log n) time, O(1) memory</button>
+  <button class="opt">O(n) time, O(n) memory</button>
+  <p class="explain">Each of the <em>n</em> arguments does real work once: two calls and a <code>max</code>. Every other
+  call is an O(1) lookup, and there are at most two per real call. The memo has <em>n</em> entries, and the stack goes
+  <em>n</em> deep (<code>best(0)</code> &rarr; <code>best(1)</code> &rarr; &hellip;). The widget above shows the counts:
+  201 calls for 100 houses.</p>
+</div>
+
+<!-- ───────────────────────────────────────── -->
+<h2>5. Optional: the same table, filled by a loop</h2>
+
+<p>The memo is a table <code>best[0..n&minus;1]</code>. You can fill it without recursion, as long as every entry is
+filled <em>after</em> the entries it reads. <em>CPH</em> notes that &ldquo;most competitive programmers prefer this
+implementation, because it is shorter and has lower constant factors&rdquo;, but that &ldquo;it is often easier to think
+about dynamic programming solutions in terms of recursive functions&rdquo;
+(<a href="https://cses.fi/book/book.pdf#page=78">PDF p.&nbsp;78</a>). So think recursively, then convert if you like.</p>
+
+<div class="quiz" data-answer="0">
+  <p class="q">4. To fill <code>best[]</code> with a loop instead of recursion, which order works?</p>
+  <button class="opt">i from n&minus;1 down to 0</button>
+  <button class="opt">i from 0 up to n&minus;1</button>
+  <button class="opt">either order gives the same table</button>
+  <button class="opt">even i first, then odd i</button>
+  <p class="explain"><code>best[i]</code> reads <code>best[i+1]</code> and <code>best[i+2]</code>, so both must already be
+  filled. Fill them by going right to left, which is what you did by hand in &sect;1. (If you define the state as
+  &ldquo;houses 0..i&rdquo; instead, the loop runs left to right. Both are fine, but the direction must match the
+  definition.)</p>
+</div>
+<p class="score"></p>
+
+<p class="sidenote">Stretch: the loop reads only the next two entries, so two variables can replace the whole array.
+That gives O(1) memory.</p>
+
+<!-- ───────────────────────────────────────── -->
+<h2>6. Your turn: <code>usr/src/leetcode/198.cpp</code></h2>
+
+<ol>
+  <li>Write the contract as a comment, in your own words.</li>
+  <li>Write the <strong>plain recursion</strong> first, even if you&rsquo;ve already spotted the fix. Run
+  <code>./test.sh 198</code>. <strong>Predict</strong> how many cases pass before the timeout, then check.</li>
+  <li>Add the memo (array, lookup, store). Expect 20/20.</li>
+  <li><strong>Predict</strong> which case fails if you start the memo at <code>0</code> (quiz 2). Try it.</li>
+  <li>Optional: rewrite it as the loop in &sect;5, then with two variables.</li>
+</ol>
+
+<p>One difference from 236: <code>rob(nums)</code> doesn&rsquo;t take an index, so it can&rsquo;t <em>be</em>
+<code>best(i)</code> the way <code>lowestCommonAncestor</code> was <code>f(t)</code>. You&rsquo;ll need a helper.
+Remember 236&rsquo;s first attempt: pass the vector <em>by reference</em>.</p>
+
+<details><summary>Hint 1</summary>
+<p>What is <code>best(i)</code> when <code>i &ge; n</code>? Note that <code>i</code> can reach <code>n+1</code>, because
+robbing house <code>n&minus;1</code> asks for <code>best(n+1)</code>.</p></details>
+<details><summary>Hint 2</summary>
+<p>Skipping house <code>i</code> is worth <code>best(i+1)</code>. Robbing it is worth <code>nums[i]</code> plus what
+quiz 1 says. Return the larger.</p></details>
+<details><summary>Hint 3</summary>
+<p>Keep a member <code>std::vector&lt;int&gt; memo</code>. In <code>rob</code>, set it to <code>n</code> copies of
+<code>-1</code>. In the helper, after the base case, return <code>memo[i]</code> if it isn&rsquo;t <code>-1</code>, and
+store into it just before you return.</p></details>
+
+<hr>
+
+<h3>Primary source</h3>
+<p><a href="https://cses.fi/book/book.pdf#page=75"><em>CPH</em> ch.&nbsp;7 &ldquo;Dynamic programming&rdquo;</a>, the
+coin problem (printed pp.&nbsp;65&ndash;68). It takes the same path as this lesson, from recursive formulation to
+memoization to the loop, on a problem with more choices per step. To watch it, Errichto&rsquo;s
+<a href="https://www.youtube.com/watch?v=YBSt1jYwVfU">DP #1: Fibonacci, iteration vs recursion</a> is the introduction
+recommended by the <a href="https://usaco.guide/gold/intro-dp">USACO Guide&rsquo;s Intro to DP</a>, which also has graded
+practice. Once you&rsquo;re green, compare with <a href="https://walkccc.me/LeetCode/problems/198/">walkccc 198</a>.</p>
+
+<p><strong>Next:</strong> <a href="https://leetcode.com/problems/house-robber-iii/">LC 337 House Robber III</a>, the
+same choice on a <em>tree</em>, combining Lesson 6&rsquo;s contract with today&rsquo;s. Or try
+<a href="https://leetcode.com/problems/house-robber-ii/">LC 213 House Robber II</a> cold, where the street is a circle.</p>
+
+<p class="callout">Stuck, or something feels hand-wavy? <strong>Ask me.</strong> Paste your code or the
+<code>./test.sh 198</code> output and I&rsquo;ll point at the line without rewriting it.</p>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    CallTree.mount(document.getElementById("ct"), { n: 6, min: 2, max: 7 });
+  });
+</script>
+</body>
+</html>

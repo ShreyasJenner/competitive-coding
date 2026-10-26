@@ -41,6 +41,15 @@
         { file: "0006-ask-your-children.html", n: 6, title: "Ask Your Children", problem: "LC 236" },
       ],
     },
+    {
+      id: "dp",
+      title: "Dynamic Programming",
+      reference: "dp.html",
+      lessons: [
+        { file: "0007-ask-each-question-once.html", n: 7, title: "Ask Each Question Once", problem: "LC 198" },
+        { file: "0008-two-answers-per-node.html", n: 8, title: "Two Answers per Node", problem: "LC 337" },
+      ],
+    },
   ];
 
   function a(href, text, cls) {

@@ -17,6 +17,12 @@
 
 - CPH tree chapters (same PDF): ch. 14 Tree algorithms (printed p. 133, PDF p. 143). Subtree DP `count[s]` is on PDF p. 145, binary-tree pre/in/post-order on PDF p. 149, and ch. 18's LCA definition ("the lowest node whose subtree contains both the nodes") on PDF p. 177. Use for: tree recursion that returns values (236, 104, 543, 124). Ch. 18's binary-lifting/Euler-tour methods are for many queries, which LeetCode rarely needs.
 
+- CPH DP chapter (same PDF): ch. 7 Dynamic programming (printed p. 65, PDF p. 75). The coin problem takes the full path: recursive formulation (PDF p. 76) → plain recursion is exponential, then memoization with `ready[]`/`value[]` (PDF p. 77) → iterative table, "most competitive programmers prefer this implementation" (PDF p. 78). Use for: the primary DP source (198, 322, 213).
+- [USACO Guide: Intro to DP (Gold)](https://usaco.guide/gold/intro-dp)
+  Links CPH ch. 7 and a graded problem list (CSES DP section, AtCoder DP Contest). Its worked example is Frog 1 (`dp[i]` = min cost to reach stone i), with push and pull versions. Use for: DP practice sets after a lesson.
+- [Errichto, "Dynamic Programming lecture #1: Fibonacci, iteration vs recursion" (YouTube)](https://www.youtube.com/watch?v=YBSt1jYwVfU)
+  USACO Guide calls it a "Great introduction video". #2 covers coin change. Use for: a video on the same recursion → memo → loop path.
+
 - [_Crafting Interpreters_ by Robert Nystrom, ch. 6 "Parsing Expressions" (free online)](https://craftinginterpreters.com/parsing-expressions.html)
   The clearest free explanation of recursive descent: each grammar rule becomes a function, and a `current` cursor marks the next token. Use for: parsing/expression problems (1106, 394, 224, 726). §6.2 is the core; §6.3 covers error handling, which LeetCode rarely needs.
 
@@ -28,5 +34,4 @@
   Per-problem discussion threads. Use for: comparing your approach with others' after an AC.
 
 ## Gaps
-- No trusted, structured source picked yet for DP intuition (candidates to evaluate: CPH ch. 7, USACO Guide Gold DP, Errichto's DP lectures).
 - Graphs: CPH ch. 11–12 and USACO Flood Fill so far. Still need a source for BFS shortest paths and topological sort (USACO Silver/Gold modules are candidates).
