@@ -35,6 +35,9 @@ inline void record(bool ok, const std::string &input, const std::string &got,
 // Prints the summary line test.sh parses; returns main()'s exit code.
 inline int summary() {
   std::cout << "cases: " << passed << " passed, " << failed << " failed\n";
+  // LeakSanitizer reports leaks after main() returns and then exits before
+  // std::cout is flushed, which would lose this line.
+  std::cout.flush();
   return failed != 0;
 }
 

@@ -1,5 +1,14 @@
 # Teaching notes
 
+## ▶ Interlude (2026-10-27): LC 382 + LC 460, learner's choice, cold, tests only
+
+The learner wanted two problems of their own before resuming 337. Format: **cold, tests only** (no lesson). Give hints only when asked. Both are off the usual track: 382 is randomness (reservoir sampling is the follow-up), and 460 is data-structure design (a Hard).
+- **382:** the starter returns 0 (0/14). The test checks fairness with Pearson chi-square (limit = df + 10·sqrt(2df) + 10; a correct solution failed 0 of 40 reruns) and checks consecutive pairs (catches a round-robin picker). It also checks that two objects alive at once don't share state and that the list isn't modified. Verified: reservoir and vector+rand get 14/14. The `(0,i)` off-by-one reservoir, never-last, a fixed reseed per call, round-robin and a static vector all fail. It **can't test the follow-up** (no extra space), so if they store a vector, ask the follow-up question.
+- **460:** the starter is an empty stub (1/16). The reference is a set of (count, time, key), cross-checked against a brute-force scan on 200k sequences. LIMIT is 6 s: O(1) takes about 9 s for the whole file, and a set-based solution passes in about 14 s. Ask the O(1) follow-up if they use a set. An O(capacity) scan times out. MRU-in-tie, insertion-order tie, a put that doesn't count as a use, and no minFreq reset all fail. The minFreq bug crashes with a `list::back()` assertion on the reset case.
+- testlib `summary()` now flushes, so a LeakSanitizer exit no longer loses the `cases:` line.
+- **382 DONE** (record 0010): v1 count+walk, then the follow-up as reservoir `!(rand() % i)`, both 14/14. The test was fixed so a relinked list fails instead of hanging; the starter `main` now frees its list. They didn't follow the maths, so I explained the telescoping proof. The ½-coin question showed they weren't using the product rule; after the table they got n=4 right (1/16, ¼). Spaced check later: "why does node 1 end at 1/n?" **Next: 460.**
+- After both: write a learning record per problem (or one combined), then **resume the 26 Oct plan below** (spaced checks, then 337).
+
 ## ▶ RESUME HERE (end of session 2026-10-26)
 
 **State:** LC 198 is solved twice (cold loop, then a top-down memo; record 0009). `usr/src/leetcode/198.cpp` now holds the **memo** version, and the loop version is in `reference/dp.html`. **LC 337 has been issued but not started**: the starter is untouched and Lesson 8 hasn't been read (as far as I know).
